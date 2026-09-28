@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Leave Types - LeaveEase{% endblock %}
+{% block page_title %}Leave Types Configuration{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <!-- Left Column: Add Leave Type Form -->
+    <div class="col-lg-5 mb-4">
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-plus me-2 text-primary"></i>Add Leave Type</h5>
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="id_name" class="form-label text-secondary">Leave Type Name *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <small class="text-danger d-block mt-1">{{ form.name.errors.0 }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_allocated_days" class="form-label text-secondary">Allocated Days Per Year *</label>
+                    {{ form.allocated_days }}
+                    {% if form.allocated_days.errors %}
+                        <small class="text-danger d-block mt-1">{{ form.allocated_days.errors.0 }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_color_code" class="form-label text-secondary">Calendar Display Color *</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        {{ form.color_code }}
+                        <small class="text-muted">Select a color to represent this leave on the team calendar.</small>
+                    </div>
+                    {% if form.color_code.errors %}
+                        <small class="text-danger d-block mt-1">{{ form.color_code.errors.0 }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="id_description" class="form-label text-secondary">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <small class="text-danger d-block mt-1">{{ form.description.errors.0 }}</small>
+                    {% endif %}
+                </div>
+                
+                <button type="submit" class="btn btn-gradient-primary w-100">
+                    <i class="fa-solid fa-square-plus me-2"></i>Create Leave Type
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Right Column: Existing Leave Types List -->
+    <div class="col-lg-7 mb-4">
+        <div class="glass-card p-4 h-100">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-list-ul me-2 text-primary"></i>Configured Leave Types</h5>
+            
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>Leave Name</th>
+                            <th>Allocated Days</th>
+                            <th>Color Code</th>
+                            <th>Description</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lt in leave_types %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="d-inline-block rounded-circle" style="width: 10px; height: 10px; background-color: {{ lt.color_code }};"></span>
+                                    <span class="text-white fw-semibold">{{ lt.name }}</span>
+                                </div>
+                            </td>
+                            <td class="text-white fw-bold">{{ lt.allocated_days }} days</td>
+                            <td>
+                                <code class="text-secondary" style="font-size: 0.85rem;">{{ lt.color_code }}</code>
+                            </td>
+                            <td>
+                                <small class="text-secondary d-inline-block text-wrap" style="max-width: 180px;">{{ lt.description|default:"No description" }}</small>
+                            </td>
+                            <td>
+                                <form method="post" action="{% url 'admin_leave_type_delete' lt.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this leave type? This will delete all associated balances!');">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" style="font-size: 0.75rem; border-radius: 6px; padding: 0.25rem 0.5rem;">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">No leave types configured. Add one on the left.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

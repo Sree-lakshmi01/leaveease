@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Employee Leaves - LeaveEase{% endblock %}
+{% block page_title %}Employee Profile & Balances{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <!-- Left Column: Employee Profile Details & Update Balances Form -->
+    <div class="col-lg-5 mb-4">
+        <!-- Profile Card -->
+        <div class="glass-card p-4 mb-4 text-center">
+            <div class="position-relative d-inline-block mb-3">
+                {% if employee.profile_pic %}
+                    <img src="{{ employee.profile_pic.url }}" alt="Profile Picture" class="rounded-circle border border-light border-opacity-10" style="width: 100px; height: 100px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white font-heading fw-bold bg-secondary" style="width: 100px; height: 100px; font-size: 2.5rem; margin: 0 auto;">
+                        {{ employee.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <h4 class="text-white mb-1">{{ employee.get_full_name|default:employee.username }}</h4>
+            <p class="text-secondary mb-3">@{{ employee.username }} | {{ employee.designation|default:"Staff" }}</p>
+            
+            <hr class="border-light border-opacity-10 my-3">
+            
+            <div class="text-start">
+                <div class="row mb-2">
+                    <div class="col-6 text-muted" style="font-size: 0.8rem;">Department:</div>
+                    <div class="col-6 text-white" style="font-size: 0.85rem;">{{ employee.department|default:"--" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6 text-muted" style="font-size: 0.8rem;">Email Address:</div>
+                    <div class="col-6 text-white" style="font-size: 0.85rem; word-break: break-all;">{{ employee.email }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6 text-muted" style="font-size: 0.8rem;">Phone Number:</div>
+                    <div class="col-6 text-white" style="font-size: 0.85rem;">{{ employee.phone|default:"--" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6 text-muted" style="font-size: 0.8rem;">Gender:</div>
+                    <div class="col-6 text-white" style="font-size: 0.85rem;">{{ employee.get_gender_display|default:"--" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6 text-muted" style="font-size: 0.8rem;">Date of Joining:</div>
+                    <div class="col-6 text-white" style="font-size: 0.85rem;">{{ employee.date_of_joining|default:"--" }}</div>
+                </div>
+            </div>
+            <div class="mt-4 text-start">
+                <a href="{% url 'admin_employees' %}" class="btn btn-sm btn-outline-secondary w-100 glass-input">
+                    <i class="fa-solid fa-arrow-left me-2"></i>Back to Employee List
+                </a>
+            </div>
+        </div>
+        
+        <!-- Leave Balances Editor Card -->
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-scale-balanced me-2 text-primary"></i>Adjust Leave Balances</h5>
+            
+            <div class="d-flex flex-column gap-3">
+                {% for bal in balances %}
+                <div class="p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="text-white fw-semibold d-block" style="font-size: 0.9rem;">{{ bal.leave_type.name }}</span>
+                            <small class="text-secondary" style="font-size: 0.75rem;">Remaining: {{ bal.remaining }} / Used: {{ bal.used }} days</small>
+                        </div>
+                        <span class="badge" style="background: {{ bal.leave_type.color_code }}20; color: {{ bal.leave_type.color_code }}; border: 1px solid {{ bal.leave_type.color_code }}30;">
+                            Allocated: {{ bal.allocated }}
+                        </span>
+                    </div>
+                    
+                    <form method="post" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_balance" value="1">
+                        <input type="hidden" name="balance_id" value="{{ bal.pk }}">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text glass-input" style="font-size: 0.75rem; background: rgba(255,255,255,0.01);">Allocated Days</span>
+                            <input type="number" name="allocated" value="{{ bal.allocated }}" class="form-control glass-input text-white fw-bold" style="max-width: 80px;" min="0" required>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-gradient-primary px-3">Update</button>
+                    </form>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center m-0">No leave balances allocated yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Employee Leave History -->
+    <div class="col-lg-7 mb-4">
+        <div class="glass-card p-4 h-100">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Leave Request History</h5>
+            
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in requests %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="d-inline-block rounded-circle" style="width: 8px; height: 8px; background-color: {{ req.leave_type.color_code }};"></span>
+                                    <span>{{ req.leave_type.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-white d-block" style="font-size: 0.8rem;">{{ req.start_date }}</small>
+                                <small class="text-secondary" style="font-size: 0.7rem;">to {{ req.end_date }}</small>
+                            </td>
+                            <td class="text-white fw-bold">{{ req.duration }}</td>
+                            <td>
+                                <span class="status-badge {{ req.status|lower }}">
+                                    <i class="fa-solid {% if req.status == 'HR_PENDING' or req.status == 'ADMIN_PENDING' %}fa-circle-notch fa-spin{% elif req.status == 'APPROVED' %}fa-circle-check{% elif req.status == 'REJECTED' %}fa-circle-xmark{% else %}fa-circle-minus{% endif %}"></i>
+                                    {{ req.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 150px;" title="{{ req.reason }}">{{ req.reason }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">No leave request history found for this employee.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

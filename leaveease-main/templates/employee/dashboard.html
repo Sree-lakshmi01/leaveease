@@ -1,0 +1,577 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - LeaveEase{% endblock %}
+{% block page_title %}Employee Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="row mb-4 animate-fade-in">
+    <div class="col-12">
+        <div class="glass-card p-4 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%), var(--bg-card);">
+            <div>
+                <h3 class="text-white m-0">Hello, {{ request.user.first_name|default:request.user.username }}!</h3>
+                <p class="text-secondary m-0">Track and manage your leave requests here.</p>
+            </div>
+            <div>
+                <a href="{% url 'apply_leave' %}" class="btn btn-gradient-primary">
+                    <i class="fa-solid fa-plus me-2"></i>Apply for Leave
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats / Leave Balances widgets -->
+<!-- 2. One-Click "Quick Apply" Widgets (Quick Actions Module) -->
+<div class="row mb-4 animate-fade-in">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="text-white m-0 font-heading"><i class="fa-solid fa-bolt me-2 text-warning"></i>Quick Actions</h5>
+            <small class="text-muted">1-Click Fast Track Leave Application</small>
+        </div>
+        <div class="row g-3">
+            <!-- Micro-card 1: Out Sick Today -->
+            <div class="col-md-4 col-sm-6">
+                <button type="button" class="quick-action-card w-100 text-start border-0 bg-transparent p-0" onclick="triggerQuickApply('sick_today')" aria-label="Quick apply: Out Sick Today">
+                    <div class="glass-card p-3 d-flex align-items-center gap-3 quick-action-inner">
+                        <div class="quick-action-icon bg-danger-subtle text-danger">
+                            <i class="fa-solid fa-temperature-three-quarters"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="text-white m-0 fw-semibold style-quick-title">Out Sick Today</h6>
+                                <span class="badge bg-danger-subtle text-danger style-quick-badge">1 Day</span>
+                            </div>
+                            <p class="text-secondary m-0 style-quick-desc">Instant sick leave starting today</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-muted style-quick-arrow"></i>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Micro-card 2: Half-Day Casual -->
+            <div class="col-md-4 col-sm-6">
+                <button type="button" class="quick-action-card w-100 text-start border-0 bg-transparent p-0" onclick="triggerQuickApply('half_day')" aria-label="Quick apply: Half-Day Casual">
+                    <div class="glass-card p-3 d-flex align-items-center gap-3 quick-action-inner">
+                        <div class="quick-action-icon bg-warning-subtle text-warning">
+                            <i class="fa-solid fa-business-time"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="text-white m-0 fw-semibold style-quick-title">Half-Day Casual</h6>
+                                <span class="badge bg-warning-subtle text-warning style-quick-badge">0.5 Day</span>
+                            </div>
+                            <p class="text-secondary m-0 style-quick-desc">Quick afternoon / morning off</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-muted style-quick-arrow"></i>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Micro-card 3: Tomorrow Off -->
+            <div class="col-md-4 col-sm-12">
+                <button type="button" class="quick-action-card w-100 text-start border-0 bg-transparent p-0" onclick="triggerQuickApply('tomorrow_off')" aria-label="Quick apply: Tomorrow Off">
+                    <div class="glass-card p-3 d-flex align-items-center gap-3 quick-action-inner">
+                        <div class="quick-action-icon bg-info-subtle text-info">
+                            <i class="fa-solid fa-umbrella-beach"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="text-white m-0 fw-semibold style-quick-title">Tomorrow Off</h6>
+                                <span class="badge bg-info-subtle text-info style-quick-badge">1 Day</span>
+                            </div>
+                            <p class="text-secondary m-0 style-quick-desc">Planned 1-day casual leave tomorrow</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-muted style-quick-arrow"></i>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 1. Stats / Leave Balances widgets with Projection Mode -->
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-3 animate-fade-in">
+    <div class="d-flex align-items-center gap-2">
+        <h5 class="text-white m-0 font-heading">My Leave Balances</h5>
+        <span class="badge bg-secondary-subtle text-secondary" id="projectionStatusBadge">Current Balances</span>
+    </div>
+    
+    <!-- Projection Mode Controls -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <label for="projectionDatePicker" class="text-secondary small m-0 fw-medium">
+            <i class="fa-solid fa-wand-magic-sparkles me-1 text-primary"></i>Projection Mode:
+        </label>
+        <input type="date" id="projectionDatePicker" class="form-control form-control-sm glass-input style-projection-input" style="width: auto; min-width: 140px;" aria-label="Select target date for leave projection">
+        <button type="button" class="btn btn-sm btn-outline-secondary style-proj-preset" onclick="setProjectionPreset(90)" title="Project 3 months ahead">+3 Mo</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary style-proj-preset" onclick="setProjectionPreset(180)" title="Project 6 months ahead">+6 Mo</button>
+        <button type="button" class="btn btn-sm btn-outline-danger style-proj-reset d-none" id="resetProjectionBtn" onclick="resetProjection()" title="Reset to current balances">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+</div>
+
+<div class="row g-4 mb-4 animate-fade-in">
+    {% for bal in balances %}
+    <div class="col-md-4 col-sm-6">
+        <div class="glass-card p-4 d-flex justify-content-between align-items-center balance-card-item">
+            <div>
+                <span class="text-secondary d-block mb-1" style="font-size: 0.85rem; font-weight: 500;">{{ bal.leave_type.name }}</span>
+                <h3 class="text-white m-0 font-heading fw-bold" id="bal-display-{{ bal.pk }}">
+                    <span class="val-remaining">{{ bal.remaining }}</span>
+                    <span style="font-size: 0.9rem; font-weight: 400; color: var(--text-secondary);">/ {{ bal.allocated }} days left</span>
+                </h3>
+                <small class="text-muted d-block mt-1">Used: {{ bal.used }} days</small>
+                <div class="proj-badge-container mt-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle proj-badge d-none" id="proj-badge-{{ bal.pk }}"></span>
+                </div>
+            </div>
+            
+            <!-- Circular Progress widget with Projection stroke -->
+            <div class="progress-ring-wrapper text-center">
+                <div class="progress-ring" data-pk="{{ bal.pk }}" data-remaining="{{ bal.remaining }}" data-allocated="{{ bal.allocated }}" data-type="{{ bal.leave_type.name|slugify }}">
+                    <svg viewBox="0 0 80 80" width="80" height="80">
+                        <!-- Track circle -->
+                        <circle class="progress-ring__track" stroke="rgba(255, 255, 255, 0.05)" stroke-width="6" fill="transparent" r="30" cx="40" cy="40"/>
+                        <!-- Projected circle (Dashed stroke) -->
+                        <circle class="progress-ring__projected" stroke="{{ bal.leave_type.color_code }}" stroke-width="6" stroke-dasharray="4 3" opacity="0" fill="transparent" r="30" cx="40" cy="40"
+                                stroke-dashoffset="188.4" style="transition: stroke-dashoffset 0.6s ease, opacity 0.4s ease;"/>
+                        <!-- Current balance circle -->
+                        <circle class="progress-ring__circle" stroke="{{ bal.leave_type.color_code }}" stroke-width="6" fill="transparent" r="30" cx="40" cy="40"
+                                stroke-dasharray="188.4" stroke-dashoffset="188.4" style="transition: stroke-dashoffset 0.6s ease;"/>
+                    </svg>
+                    <div class="progress-ring-text text-white">{% widthratio bal.remaining bal.allocated 100 %}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="glass-card p-4 text-center text-muted">
+            No leave balances allocated yet. Contact administrator.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 4. Summary Tables & Mobile-Responsive Data Table Conversion -->
+<div class="row animate-fade-in">
+    <!-- Left Column: Recent Leave Requests -->
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-white m-0"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Recent Leave Requests</h5>
+                <a href="{% url 'leave_history' %}" class="text-decoration-none" style="color: var(--accent-primary); font-size: 0.85rem;">View All</a>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table custom-table responsive-card-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Leave Type</th>
+                            <th scope="col">Duration</th>
+                            <th scope="col">Days</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in recent_leaves %}
+                        <tr>
+                            <td data-label="Leave Type:">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="d-inline-block rounded-circle" style="width: 10px; height: 10px; background-color: {{ req.leave_type.color_code }};"></span>
+                                    <span class="fw-medium text-white">{{ req.leave_type.name }}</span>
+                                </div>
+                            </td>
+                            <td data-label="Duration:">
+                                <small class="text-white d-block">{{ req.start_date }}</small>
+                                <small class="text-secondary" style="font-size: 0.75rem;">to {{ req.end_date }}</small>
+                            </td>
+                            <td data-label="Days:">
+                                <span class="fw-semibold text-white">{{ req.duration }}</span>
+                            </td>
+                            <td data-label="Status:">
+                                <span class="status-badge {{ req.status|lower }}">
+                                    <i class="fa-solid {% if req.status == 'HR_PENDING' or req.status == 'ADMIN_PENDING' %}fa-circle-notch fa-spin{% elif req.status == 'APPROVED' %}fa-circle-check{% elif req.status == 'REJECTED' %}fa-circle-xmark{% else %}fa-circle-minus{% endif %}"></i>
+                                    {{ req.get_status_display }}
+                                </span>
+                            </td>
+                            <td data-label="Action:" class="text-md-end text-start">
+                                <div class="d-flex gap-1 justify-content-md-end align-items-center flex-wrap">
+                                    <button type="button" class="btn btn-sm px-2.5 py-1" style="font-size: 0.75rem; border-radius: 20px; background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.3)';" onmouseout="this.style.background='rgba(168,85,247,0.15)';" onclick="openOffcanvasFromElement(this)"
+                                        data-id="{{ req.pk }}"
+                                        data-employee-name="{{ req.user.get_full_name|default:req.user.username }}"
+                                        data-department="{{ req.user.department|default:'Engineering' }}"
+                                        data-designation="{{ req.user.designation|default:'Employee' }}"
+                                        data-avatar="{% if req.user.profile_pic %}{{ req.user.profile_pic.url }}{% endif %}"
+                                        data-leave-type="{{ req.leave_type.name }}"
+                                        data-leave-color="{{ req.leave_type.color_code }}"
+                                        data-start-date="{{ req.start_date }}"
+                                        data-end-date="{{ req.end_date }}"
+                                        data-duration="{{ req.duration }}"
+                                        data-reason="{{ req.reason }}"
+                                        data-status="{{ req.status }}"
+                                        data-status-display="{{ req.get_status_display }}"
+                                        data-medical-certificate="{% if req.medical_certificate %}{{ req.medical_certificate.url }}{% endif %}"
+                                        data-admin-remarks="{{ req.admin_remarks|default:'' }}"
+                                        data-rejection-reason="{{ req.rejection_reason|default:'' }}"
+                                        data-hr-approved-by="{% if req.hr_approved_by %}{{ req.hr_approved_by.get_full_name|default:req.hr_approved_by.username }}{% endif %}"
+                                        data-hr-approved-at="{% if req.hr_approved_at %}{{ req.hr_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                        data-admin-approved-by="{% if req.admin_approved_by %}{{ req.admin_approved_by.get_full_name|default:req.admin_approved_by.username }}{% endif %}"
+                                        data-admin-approved-at="{% if req.admin_approved_at %}{{ req.admin_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                        data-applied-on="{% if req.applied_on %}{{ req.applied_on|date:'M d, Y • h:i A' }}{% endif %}"
+                                        data-balances="{{ req.user_balances_json|escape }}"
+                                        data-reassignments="{{ req.task_reassignments_json|escape }}"
+                                    >
+                                        <i class="fa-solid fa-sidebar me-1"></i> ✨ View Details & Handover
+                                    </button>
+
+                                    {% if req.status == 'HR_PENDING' or req.status == 'ADMIN_PENDING' %}
+                                    <a href="{% url 'cancel_leave' req.pk %}" class="btn btn-sm btn-outline-danger ms-1" onclick="return confirm('Are you sure you want to cancel this pending request?');" style="font-size: 0.75rem; border-radius: 6px; padding: 0.25rem 0.5rem;">
+                                        Cancel
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No recent leave requests found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% include 'includes/detailed_leave_offcanvas.html' %}
+
+    <!-- Right Column: Public Holidays -->
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card p-4 h-100">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-umbrella-beach me-2 text-warning"></i>Upcoming Holidays</h5>
+            
+            <div class="d-flex flex-column gap-3">
+                {% for holiday in upcoming_holidays %}
+                <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                    <div>
+                        <span class="text-white fw-semibold d-block" style="font-size: 0.85rem;">{{ holiday.name }}</span>
+                        <small class="text-muted" style="font-size: 0.75rem;">{{ holiday.description|default:"Public Holiday" }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">
+                            {{ holiday.date|date:"M d, Y" }}
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">No upcoming public holidays.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Apply Modal -->
+<div class="modal fade" id="quickApplyModal" tabindex="-1" aria-labelledby="quickApplyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-0" style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--border-strong);">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title text-white font-heading d-flex align-items-center gap-2" id="quickApplyModalLabel">
+                    <i class="fa-solid fa-bolt text-warning"></i>
+                    <span id="quickModalTitle">Quick Apply Leave</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'apply_leave' %}" method="POST" id="quickApplyForm">
+                {% csrf_token %}
+                <div class="modal-body py-3">
+                    <div class="p-3 rounded-3 mb-3 d-flex align-items-center justify-content-between" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2);">
+                        <div>
+                            <span class="text-muted d-block small" style="font-size: 0.75rem;">PRE-FILLED SCENARIO</span>
+                            <span class="text-white fw-bold fs-6" id="quickSummaryType">Sick Leave</span>
+                        </div>
+                        <span class="badge bg-primary" id="quickSummaryDuration">1 Day</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="quickLeaveTypeSelect" class="form-label text-secondary small fw-medium">Leave Type</label>
+                        <select name="leave_type" id="quickLeaveTypeSelect" class="form-select glass-input" required>
+                            {% for bal in balances %}
+                                <option value="{{ bal.leave_type.pk }}" data-name="{{ bal.leave_type.name }}">{{ bal.leave_type.name }} (Available: {{ bal.remaining }} days)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label for="quickStartDate" class="form-label text-secondary small fw-medium">Start Date</label>
+                            <input type="date" name="start_date" id="quickStartDate" class="form-control glass-input" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="quickEndDate" class="form-label text-secondary small fw-medium">End Date</label>
+                            <input type="date" name="end_date" id="quickEndDate" class="form-control glass-input" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="quickReason" class="form-label text-secondary small fw-medium">Reason</label>
+                        <textarea name="reason" id="quickReason" class="form-control glass-input" rows="2" required></textarea>
+                    </div>
+
+                    <div class="form-check text-muted small">
+                        <input class="form-check-input" type="checkbox" id="quickConfirmCheck" checked required>
+                        <label class="form-check-label text-secondary" for="quickConfirmCheck">
+                            Confirm instant single-click submission
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0 d-flex justify-content-between align-items-center">
+                    <a href="{% url 'apply_leave' %}" class="btn btn-link text-muted p-0 text-decoration-none small">
+                        <i class="fa-solid fa-sliders me-1"></i> Open Standard Form
+                    </a>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-gradient-primary btn-sm px-4 fw-semibold">
+                            <i class="fa-solid fa-check me-1"></i> Confirm &amp; Submit
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Render initial circular progress charts
+        initCircularProgressRings();
+
+        // Initialize Projection Datepicker to min today
+        const projInput = document.getElementById('projectionDatePicker');
+        if (projInput) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            projInput.min = todayStr;
+            projInput.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    calculateProjections(new Date(e.target.value));
+                } else {
+                    resetProjection();
+                }
+            });
+        }
+    });
+
+    function initCircularProgressRings() {
+        document.querySelectorAll('.progress-ring').forEach(ring => {
+            const circle = ring.querySelector('.progress-ring__circle');
+            const projectedCircle = ring.querySelector('.progress-ring__projected');
+            
+            const remaining = parseFloat(ring.getAttribute('data-remaining')) || 0;
+            const allocated = parseFloat(ring.getAttribute('data-allocated')) || 1;
+            
+            const radius = circle ? circle.r.baseVal.value : 30;
+            const circumference = radius * 2 * Math.PI;
+
+            if (circle) {
+                circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                const pct = Math.min(100, Math.max(0, (remaining / allocated) * 100));
+                const offset = circumference - (pct / 100) * circumference;
+                circle.style.strokeDashoffset = offset;
+            }
+
+            if (projectedCircle) {
+                projectedCircle.style.strokeDasharray = `4 3`;
+                projectedCircle.style.strokeDashoffset = circumference;
+                projectedCircle.style.opacity = '0';
+            }
+        });
+    }
+
+    // 1. Projection Mode Calculations
+    function calculateProjections(targetDate) {
+        const today = new Date();
+        if (targetDate <= today) {
+            resetProjection();
+            return;
+        }
+
+        // Calculate month delta
+        const monthDelta = (targetDate.getFullYear() - today.getFullYear()) * 12 + (targetDate.getMonth() - today.getMonth()) + ((targetDate.getDate() - today.getDate()) / 30);
+        if (monthDelta <= 0) {
+            resetProjection();
+            return;
+        }
+
+        const resetBtn = document.getElementById('resetProjectionBtn');
+        const statusBadge = document.getElementById('projectionStatusBadge');
+        if (resetBtn) resetBtn.classList.remove('d-none');
+        if (statusBadge) {
+            statusBadge.textContent = `Projected (${targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})`;
+            statusBadge.className = 'badge bg-primary-subtle text-primary border border-primary-subtle';
+        }
+
+        document.querySelectorAll('.progress-ring').forEach(ring => {
+            const pk = ring.getAttribute('data-pk');
+            const remaining = parseFloat(ring.getAttribute('data-remaining')) || 0;
+            const allocated = parseFloat(ring.getAttribute('data-allocated')) || 1;
+            const leaveType = (ring.getAttribute('data-type') || '').toLowerCase();
+
+            // Monthly accrual rates
+            let monthlyAccrual = 1.25;
+            if (leaveType.includes('sick')) monthlyAccrual = 1.0;
+            else if (leaveType.includes('casual')) monthlyAccrual = 1.5;
+            else if (leaveType.includes('annual') || leaveType.includes('earned')) monthlyAccrual = 1.75;
+            else if (leaveType.includes('maternity') || leaveType.includes('paternity')) monthlyAccrual = 0;
+
+            const accrued = Math.round(monthDelta * monthlyAccrual * 10) / 10;
+            const projectedTotal = Math.round((remaining + accrued) * 10) / 10;
+
+            const circle = ring.querySelector('.progress-ring__circle');
+            const projectedCircle = ring.querySelector('.progress-ring__projected');
+            const textEl = ring.querySelector('.progress-ring-text');
+            const radius = circle ? circle.r.baseVal.value : 30;
+            const circumference = radius * 2 * Math.PI;
+
+            // Current offset
+            const currentPct = Math.min(100, Math.max(0, (remaining / allocated) * 100));
+            const currentOffset = circumference - (currentPct / 100) * circumference;
+
+            // Projected offset
+            const projectedPct = Math.min(100, Math.max(0, (projectedTotal / allocated) * 100));
+            const projectedOffset = circumference - (projectedPct / 100) * circumference;
+
+            if (projectedCircle) {
+                projectedCircle.style.strokeDashoffset = projectedOffset;
+                projectedCircle.style.opacity = '0.7';
+            }
+
+            if (textEl) {
+                textEl.textContent = `${Math.round(projectedPct)}%`;
+            }
+
+            // Update badge text
+            const projBadge = document.getElementById(`proj-badge-${pk}`);
+            if (projBadge) {
+                projBadge.textContent = `+${accrued} projected (${projectedTotal} total)`;
+                projBadge.classList.remove('d-none');
+            }
+        });
+    }
+
+    function setProjectionPreset(daysAhead) {
+        const target = new Date();
+        target.setDate(target.getDate() + daysAhead);
+        const yyyy = target.getFullYear();
+        const mm = String(target.getMonth() + 1).padStart(2, '0');
+        const dd = String(target.getDate()).padStart(2, '0');
+        const formatted = `${yyyy}-${mm}-${dd}`;
+
+        const input = document.getElementById('projectionDatePicker');
+        if (input) {
+            input.value = formatted;
+            calculateProjections(target);
+        }
+    }
+
+    function resetProjection() {
+        const input = document.getElementById('projectionDatePicker');
+        const resetBtn = document.getElementById('resetProjectionBtn');
+        const statusBadge = document.getElementById('projectionStatusBadge');
+
+        if (input) input.value = '';
+        if (resetBtn) resetBtn.classList.add('d-none');
+        if (statusBadge) {
+            statusBadge.textContent = 'Current Balances';
+            statusBadge.className = 'badge bg-secondary-subtle text-secondary';
+        }
+
+        document.querySelectorAll('.proj-badge').forEach(b => b.classList.add('d-none'));
+        initCircularProgressRings();
+    }
+
+    // 2. Quick Apply Modal Trigger Logic
+    function triggerQuickApply(scenario) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tYyyy = tomorrow.getFullYear();
+        const tMm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const tDd = String(tomorrow.getDate()).padStart(2, '0');
+        const tomorrowStr = `${tYyyy}-${tMm}-${tDd}`;
+
+        const select = document.getElementById('quickLeaveTypeSelect');
+        const titleEl = document.getElementById('quickModalTitle');
+        const summaryType = document.getElementById('quickSummaryType');
+        const summaryDuration = document.getElementById('quickSummaryDuration');
+        const startDateInput = document.getElementById('quickStartDate');
+        const endDateInput = document.getElementById('quickEndDate');
+        const reasonInput = document.getElementById('quickReason');
+
+        let targetOption = null;
+
+        if (scenario === 'sick_today') {
+            titleEl.textContent = 'Quick Apply: Out Sick Today';
+            summaryType.textContent = 'Sick Leave';
+            summaryDuration.textContent = '1 Day';
+            startDateInput.value = todayStr;
+            endDateInput.value = todayStr;
+            reasonInput.value = 'Feeling unwell - requesting 1-day sick leave today.';
+            
+            // Find sick leave option
+            for (let opt of select.options) {
+                if (opt.getAttribute('data-name').toLowerCase().includes('sick')) {
+                    targetOption = opt.value;
+                    break;
+                }
+            }
+        } else if (scenario === 'half_day') {
+            titleEl.textContent = 'Quick Apply: Half-Day Casual';
+            summaryType.textContent = 'Casual Leave';
+            summaryDuration.textContent = '0.5 Day';
+            startDateInput.value = todayStr;
+            endDateInput.value = todayStr;
+            reasonInput.value = 'Half-day casual leave for urgent personal work today.';
+            
+            for (let opt of select.options) {
+                if (opt.getAttribute('data-name').toLowerCase().includes('casual')) {
+                    targetOption = opt.value;
+                    break;
+                }
+            }
+        } else if (scenario === 'tomorrow_off') {
+            titleEl.textContent = 'Quick Apply: Tomorrow Off';
+            summaryType.textContent = 'Casual / Annual Leave';
+            summaryDuration.textContent = '1 Day';
+            startDateInput.value = tomorrowStr;
+            endDateInput.value = tomorrowStr;
+            reasonInput.value = 'Taking a planned 1-day leave tomorrow.';
+
+            for (let opt of select.options) {
+                if (opt.getAttribute('data-name').toLowerCase().includes('casual') || opt.getAttribute('data-name').toLowerCase().includes('annual')) {
+                    targetOption = opt.value;
+                    break;
+                }
+            }
+        }
+
+        if (targetOption && select) {
+            select.value = targetOption;
+        }
+
+        const modalEl = document.getElementById('quickApplyModal');
+        if (modalEl) {
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+    }
+</script>
+{% endblock %}

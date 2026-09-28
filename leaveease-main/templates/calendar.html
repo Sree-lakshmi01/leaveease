@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendar - LeaveEase{% endblock %}
+{% block page_title %}Team & Holiday Calendar{% endblock %}
+
+{% block extra_head %}
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<style>
+    #calendar-container {
+        padding: 1.5rem;
+    }
+    .fc-event {
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <div class="col-12">
+        <div class="glass-card p-2">
+            <div id="calendar-container">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Info Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border border-light border-opacity-10" style="background: var(--bg-secondary); backdrop-filter: blur(12px);">
+            <div class="modal-header border-bottom border-light border-opacity-10">
+                <h5 class="modal-title text-white" id="eventModalLabel">Event Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-white">
+                <div class="mb-3">
+                    <h5 class="m-0 text-primary" id="eventTitle"></h5>
+                </div>
+                <div class="mb-2">
+                    <small class="text-secondary d-block">Schedule</small>
+                    <span id="eventDate" class="fw-semibold"></span>
+                </div>
+                <div id="eventDetailsSection" class="mb-2" style="display: none;">
+                    <small class="text-secondary d-block">Details</small>
+                    <p id="eventDetails" class="m-0 text-white-50" style="font-size: 0.9rem;"></p>
+                </div>
+            </div>
+            <div class="modal-footer border-top border-light border-opacity-10">
+                <button type="button" class="btn btn-outline-secondary glass-input" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+        
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            editable: false,
+            selectable: false,
+            events: '/api/calendar/',
+            eventClick: function(info) {
+                document.getElementById('eventTitle').textContent = info.event.title;
+                
+                // Format Dates
+                let dateStr = info.event.start.toLocaleDateString();
+                if (info.event.end) {
+                    // FullCalendar end date is exclusive for all-day, subtract 1 day to show actual end date
+                    let actualEnd = new Date(info.event.end);
+                    actualEnd.setDate(actualEnd.getDate() - 1);
+                    dateStr += ' to ' + actualEnd.toLocaleDateString();
+                }
+                document.getElementById('eventDate').textContent = dateStr;
+                
+                // Details
+                const props = info.event.extendedProps;
+                const detailsSec = document.getElementById('eventDetailsSection');
+                const detailsText = document.getElementById('eventDetails');
+                
+                if (props.description || props.reason) {
+                    detailsText.textContent = props.description || props.reason;
+                    detailsSec.style.display = 'block';
+                } else if (props.status) {
+                    detailsText.textContent = `Status: ${props.status}`;
+                    detailsSec.style.display = 'block';
+                } else {
+                    detailsSec.style.display = 'none';
+                }
+                
+                eventModal.show();
+            }
+        });
+        
+        calendar.render();
+    });
+</script>
+{% endblock %}

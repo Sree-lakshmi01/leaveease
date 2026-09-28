@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ employee.get_full_name|default:employee.username }} - Employee Profile - LeaveEase{% endblock %}
+{% block page_title %}Employee Profile &amp; HR Records{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0 animate-fade-in">
+    <!-- Back Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <a href="{% url 'hr_employees' %}" class="btn btn-sm btn-outline-secondary glass-input text-white px-3 py-2" style="border-radius: 10px;">
+            <i class="fa-solid fa-arrow-left me-2"></i> Back to Employee Directory
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary bg-opacity-20 text-primary font-weight-600 px-3 py-2 rounded-pill">
+                <i class="fa-solid fa-shield-halved me-1"></i> HR Read-Only Access
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="row g-4 mb-4">
+        <!-- Left Profile Card & Quick Info -->
+        <div class="col-12 col-lg-4">
+            <!-- Avatar & Main Info Glass Card -->
+            <div class="glass-card p-4 text-center mb-4 position-relative overflow-hidden">
+                <div class="mb-3">
+                    {% if employee.profile_pic %}
+                        <img src="{{ employee.profile_pic.url }}" alt="{{ employee.username }}" class="rounded-circle shadow" style="width: 110px; height: 110px; object-fit: cover; border: 3px solid rgba(168, 85, 247, 0.5);">
+                    {% else %}
+                        <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center text-white fw-bold bg-primary bg-opacity-25 shadow" style="width: 110px; height: 110px; font-size: 2.8rem; border: 2px solid rgba(168, 85, 247, 0.4);">
+                            {{ employee.username|slice:":1"|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <h4 class="font-heading text-white mb-1">{{ employee.get_full_name|default:employee.username }}</h4>
+                <p class="text-muted small mb-2">@{{ employee.username }} • Employee ID: #{{ employee.id }}</p>
+                
+                <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
+                    <span class="badge bg-primary bg-opacity-20 text-primary px-3 py-1 rounded-pill" style="border: 1px solid rgba(168, 85, 247, 0.3);">
+                        {{ employee.designation|default:"Staff Member" }}
+                    </span>
+                    {% if employee.is_active %}
+                        <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-30 px-3 py-1 rounded-pill">
+                            <i class="fa-solid fa-circle-check me-1"></i> Active
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30 px-3 py-1 rounded-pill">
+                            <i class="fa-solid fa-circle-pause me-1"></i> Inactive
+                        </span>
+                    {% endif %}
+                </div>
+
+                <hr class="border-light border-opacity-10 my-3">
+
+                <!-- Contact & Org Details List -->
+                <div class="text-start">
+                    <div class="row py-2 border-bottom border-light border-opacity-10">
+                        <div class="col-5 text-muted small"><i class="fa-solid fa-building me-1 text-primary"></i> Department:</div>
+                        <div class="col-7 text-white font-weight-600 small">{{ employee.department|default:"Unassigned" }}</div>
+                    </div>
+                    <div class="row py-2 border-bottom border-light border-opacity-10">
+                        <div class="col-5 text-muted small"><i class="fa-regular fa-envelope me-1 text-primary"></i> Email:</div>
+                        <div class="col-7 text-white small text-break">{{ employee.email }}</div>
+                    </div>
+                    <div class="row py-2 border-bottom border-light border-opacity-10">
+                        <div class="col-5 text-muted small"><i class="fa-solid fa-phone me-1 text-primary"></i> Phone:</div>
+                        <div class="col-7 text-white small">{{ employee.phone|default:"Not specified" }}</div>
+                    </div>
+                    <div class="row py-2 border-bottom border-light border-opacity-10">
+                        <div class="col-5 text-muted small"><i class="fa-solid fa-venus-mars me-1 text-primary"></i> Gender:</div>
+                        <div class="col-7 text-white small">{{ employee.get_gender_display|default:"Not specified" }}</div>
+                    </div>
+                    <div class="row py-2">
+                        <div class="col-5 text-muted small"><i class="fa-regular fa-calendar-check me-1 text-primary"></i> Date Joined:</div>
+                        <div class="col-7 text-white small">{{ employee.date_of_joining|default:employee.date_joined|date:"F d, Y" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Metrics Card -->
+            <div class="glass-card p-4">
+                <h6 class="font-heading text-white mb-3"><i class="fa-solid fa-user-clock me-2 text-primary"></i>Attendance Overview</h6>
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="p-2 rounded-3" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);">
+                            <h5 class="font-heading text-success m-0">{{ attendance_stats.present }}</h5>
+                            <small class="text-muted" style="font-size: 0.7rem;">Present</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded-3" style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.2);">
+                            <h5 class="font-heading text-warning m-0">{{ attendance_stats.half_day }}</h5>
+                            <small class="text-muted" style="font-size: 0.7rem;">Half-Day</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 rounded-3" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);">
+                            <h5 class="font-heading text-danger m-0">{{ attendance_stats.absent }}</h5>
+                            <small class="text-muted" style="font-size: 0.7rem;">Absent</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Leave Balances & History -->
+        <div class="col-12 col-lg-8">
+            <!-- Leave Balances Card -->
+            <div class="glass-card p-4 mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h5 class="font-heading text-white m-0"><i class="fa-solid fa-scale-balanced me-2 text-primary"></i>Current Leave Balances</h5>
+                    <span class="badge bg-secondary bg-opacity-20 text-muted font-weight-500">Live Backend Balances</span>
+                </div>
+
+                <div class="row g-3">
+                    {% for bal in balances %}
+                    <div class="col-12 col-sm-6">
+                        <div class="p-3 rounded-3" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-white font-weight-600" style="font-size: 0.9rem;">
+                                    <span class="d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background-color: {{ bal.leave_type.color_code }};"></span>
+                                    {{ bal.leave_type.name }}
+                                </span>
+                                <span class="badge" style="background: {{ bal.leave_type.color_code }}20; color: {{ bal.leave_type.color_code }}; border: 1px solid {{ bal.leave_type.color_code }}40;">
+                                    {{ bal.remaining }} / {{ bal.allocated }} Days Remaining
+                                </span>
+                            </div>
+                            <!-- Progress bar -->
+                            <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.05); border-radius: 10px;">
+                                <div class="progress-bar rounded-pill" role="progressbar" style="width: {% if bal.allocated > 0 %}{% widthratio bal.used bal.allocated 100 %}{% else %}0{% endif %}%; background-color: {{ bal.leave_type.color_code }};"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 small text-muted" style="font-size: 0.72rem;">
+                                <span>Used: {{ bal.used }} days</span>
+                                <span>Allocated: {{ bal.allocated }} days</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <p class="text-muted text-center py-3 m-0">No leave balances set up for this employee.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Leave Requests History Card -->
+            <div class="glass-card p-4">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <h5 class="font-heading text-white m-0"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Leave Request History</h5>
+                    <span class="badge bg-secondary bg-opacity-20 text-muted">{{ requests.count }} Total Requests</span>
+                </div>
+
+                {% if requests %}
+                <div class="table-responsive">
+                    <table class="table align-middle custom-table">
+                        <thead>
+                            <tr>
+                                <th>Leave Type</th>
+                                <th>Dates</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in requests %}
+                            <tr>
+                                <td>
+                                    <span class="badge rounded-pill px-2.5 py-1" style="background-color: {{ req.leave_type.color_code }}22; color: {{ req.leave_type.color_code }}; border: 1px solid {{ req.leave_type.color_code }}44;">
+                                        {{ req.leave_type.name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="text-white small font-weight-500">{{ req.start_date }}</div>
+                                    <div class="text-muted small" style="font-size: 0.75rem;">to {{ req.end_date }}</div>
+                                </td>
+                                <td>
+                                    <span class="text-white font-weight-600 small">{{ req.duration }} Day{{ req.duration|pluralize }}</span>
+                                </td>
+                                <td>
+                                    {% if req.status == 'APPROVED' %}
+                                        <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-30 px-2.5 py-1">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Approved
+                                        </span>
+                                    {% elif req.status == 'REJECTED' %}
+                                        <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-30 px-2.5 py-1">
+                                            <i class="fa-solid fa-circle-xmark me-1"></i> Rejected
+                                        </span>
+                                    {% elif req.status == 'HR_PENDING' %}
+                                        <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30 px-2.5 py-1">
+                                            <i class="fa-solid fa-clock me-1"></i> HR Pending
+                                        </span>
+                                    {% elif req.status == 'ADMIN_PENDING' %}
+                                        <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-30 px-2.5 py-1">
+                                            <i class="fa-solid fa-paper-plane me-1"></i> Admin Pending
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary bg-opacity-20 text-muted px-2.5 py-1">
+                                            {{ req.get_status_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-muted small d-inline-block text-truncate" style="max-width: 160px;" title="{{ req.reason }}">
+                                        {{ req.reason }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="fa-regular fa-folder-open d-block mb-2 style-muted-icon" style="font-size: 1.8rem;"></i>
+                    <small>No leave request history recorded for this employee.</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

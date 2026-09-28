@@ -1,0 +1,507 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leave Requests Review - LeaveEase HR{% endblock %}
+{% block page_title %}Leave Requests Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="glass-card p-4">
+        <!-- Header & Filters -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div>
+                <div class="d-flex align-items-center gap-3">
+                    <h4 class="font-heading m-0">All Leave Requests</h4>
+                    <a href="{% url 'detailed_offcanvas_demo' %}" target="_blank" class="btn btn-sm btn-primary-grad rounded-pill px-3 py-1 font-weight-600 text-decoration-none shadow-sm me-2">
+                        <i class="fa-solid fa-sidebar me-1"></i> ✨ Detailed Leave Request View (Offcanvas)
+                    </a>
+                    <a href="{% url 'reassign_modal_demo' %}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3 py-1 font-weight-600 text-decoration-none">
+                        <i class="fa-solid fa-sparkles me-1"></i> Drag-and-Drop Modal
+                    </a>
+                </div>
+                <p class="text-muted small m-0">Monitor and filter employee leave requests across all approval stages.</p>
+            </div>
+            
+            <!-- Status Filter Pills -->
+            <div class="d-flex gap-1 bg-dark bg-opacity-40 p-1 rounded-3 flex-wrap">
+                <a href="{% url 'hr_leave_requests' %}?status=ALL" class="btn btn-sm {% if status_filter == 'ALL' %}btn-primary-grad{% else %}btn-link text-muted{% endif %} rounded-2 text-decoration-none">
+                    All
+                </a>
+                <a href="{% url 'hr_leave_requests' %}?status=HR_PENDING" class="btn btn-sm {% if status_filter == 'HR_PENDING' %}btn-warning text-dark font-weight-600{% else %}btn-link text-muted{% endif %} rounded-2 text-decoration-none">
+                    HR Pending
+                </a>
+                <a href="{% url 'hr_leave_requests' %}?status=ADMIN_PENDING" class="btn btn-sm {% if status_filter == 'ADMIN_PENDING' %}btn-info text-white font-weight-600{% else %}btn-link text-muted{% endif %} rounded-2 text-decoration-none">
+                    Admin Pending
+                </a>
+                <a href="{% url 'hr_leave_requests' %}?status=APPROVED" class="btn btn-sm {% if status_filter == 'APPROVED' %}btn-success text-white font-weight-600{% else %}btn-link text-muted{% endif %} rounded-2 text-decoration-none">
+                    Approved
+                </a>
+                <a href="{% url 'hr_leave_requests' %}?status=REJECTED" class="btn btn-sm {% if status_filter == 'REJECTED' %}btn-danger text-white font-weight-600{% else %}btn-link text-muted{% endif %} rounded-2 text-decoration-none">
+                    Rejected
+                </a>
+            </div>
+        </div>
+
+        {% if leave_requests %}
+        <div class="table-responsive">
+            <table class="table align-middle custom-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Leave Type</th>
+                        <th>Dates &amp; Duration</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                        <th>Approvals Audit</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in leave_requests %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle bg-primary bg-opacity-20 text-primary font-weight-700" style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                    {{ req.user.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'hr_employee_detail' req.user.pk %}" class="font-weight-600 text-white text-decoration-none hover-primary">{{ req.user.get_full_name|default:req.user.username }}</a>
+                                    <div class="text-muted small" style="font-size:0.75rem;">{{ req.user.department|default:"General" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill px-2.5 py-1" style="background-color: {{ req.leave_type.color_code }}22; color: {{ req.leave_type.color_code }}; border: 1px solid {{ req.leave_type.color_code }}44;">
+                                {{ req.leave_type.name }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="small font-weight-500 text-white">{{ req.start_date }} to {{ req.end_date }}</div>
+                            <div class="text-muted small">{{ req.duration }} Day{{ req.duration|pluralize }}</div>
+                        </td>
+                        <td>
+                            {% if req.status == 'HR_PENDING' %}
+                                <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-40 px-2.5 py-1 rounded-pill">
+                                    <i class="fa-solid fa-clock me-1"></i> HR Pending
+                                </span>
+                            {% elif req.status == 'ADMIN_PENDING' %}
+                                <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-40 px-2.5 py-1 rounded-pill">
+                                    <i class="fa-solid fa-paper-plane me-1"></i> Admin Pending
+                                </span>
+                            {% elif req.status == 'APPROVED' %}
+                                <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-40 px-2.5 py-1 rounded-pill">
+                                    <i class="fa-solid fa-circle-check me-1"></i> Approved
+                                </span>
+                            {% elif req.status == 'REJECTED' %}
+                                <span class="badge bg-danger bg-opacity-20 text-danger border border-danger border-opacity-40 px-2.5 py-1 rounded-pill">
+                                    <i class="fa-solid fa-circle-xmark me-1"></i> Rejected
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-20 text-muted px-2.5 py-1 rounded-pill">
+                                    {{ req.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="small text-muted d-inline-block text-truncate" style="max-width: 160px;" title="{{ req.reason }}">
+                                {{ req.reason }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="small" style="font-size:0.75rem;">
+                                {% if req.hr_approved_by %}
+                                    <div class="text-success"><i class="fa-solid fa-check me-1"></i>HR: {{ req.hr_approved_by.username }}</div>
+                                {% endif %}
+                                {% if req.admin_approved_by %}
+                                    <div class="text-info"><i class="fa-solid fa-check-double me-1"></i>Admin: {{ req.admin_approved_by.username }}</div>
+                                {% endif %}
+                                {% if not req.hr_approved_by and not req.admin_approved_by %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-1 justify-content-end align-items-center">
+                                <button type="button" class="btn btn-sm px-2.5 py-1" style="font-size: 0.75rem; border-radius: 20px; background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.3)';" onmouseout="this.style.background='rgba(168,85,247,0.15)';" onclick="openOffcanvasFromElement(this)"
+                                    data-id="{{ req.pk }}"
+                                    data-employee-name="{{ req.user.get_full_name|default:req.user.username }}"
+                                    data-department="{{ req.user.department|default:'Engineering' }}"
+                                    data-designation="{{ req.user.designation|default:'Employee' }}"
+                                    data-avatar="{% if req.user.profile_pic %}{{ req.user.profile_pic.url }}{% endif %}"
+                                    data-leave-type="{{ req.leave_type.name }}"
+                                    data-leave-color="{{ req.leave_type.color_code }}"
+                                    data-start-date="{{ req.start_date }}"
+                                    data-end-date="{{ req.end_date }}"
+                                    data-duration="{{ req.duration }}"
+                                    data-reason="{{ req.reason }}"
+                                    data-status="{{ req.status }}"
+                                    data-status-display="{{ req.get_status_display }}"
+                                    data-medical-certificate="{% if req.medical_certificate %}{{ req.medical_certificate.url }}{% endif %}"
+                                    data-admin-remarks="{{ req.admin_remarks|default:'' }}"
+                                    data-rejection-reason="{{ req.rejection_reason|default:'' }}"
+                                    data-hr-approved-by="{% if req.hr_approved_by %}{{ req.hr_approved_by.get_full_name|default:req.hr_approved_by.username }}{% endif %}"
+                                    data-hr-approved-at="{% if req.hr_approved_at %}{{ req.hr_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-admin-approved-by="{% if req.admin_approved_by %}{{ req.admin_approved_by.get_full_name|default:req.admin_approved_by.username }}{% endif %}"
+                                    data-admin-approved-at="{% if req.admin_approved_at %}{{ req.admin_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-applied-on="{% if req.applied_on %}{{ req.applied_on|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-balances="{{ req.user_balances_json|escape }}"
+                                    data-reassignments="{{ req.task_reassignments_json|escape }}"
+                                >
+                                    <i class="fa-solid fa-sidebar me-1"></i> ✨ View Details
+                                </button>
+
+                                {% if req.status == 'HR_PENDING' %}
+                                    <button type="button" class="btn btn-sm btn-success rounded-2 px-2 py-0.5" title="Approve & Forward to Admin" onclick="openHRActionModal({{ req.pk }}, 'approve', '{{ req.user.username }}')">
+                                        Approve
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger rounded-2 px-2 py-0.5" title="Reject Request" onclick="openHRActionModal({{ req.pk }}, 'reject', '{{ req.user.username }}')">
+                                        Reject
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="fa-solid fa-inbox fa-3x mb-3 opacity-50"></i>
+            <h6 class="font-heading text-white">No Leave Requests Found</h6>
+            <p class="small m-0">No records matched the selected status filter.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% include 'includes/detailed_leave_offcanvas.html' %}
+
+
+<!-- Dark Glassmorphism Approve Leave & Reassign Work Modal -->
+<div class="modal fade text-start" id="hrReassignModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 rounded-4 shadow-2xl overflow-hidden" style="background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(16px); border: 1px solid rgba(51, 65, 85, 0.8) !important; color: #f8fafc;">
+            
+            <!-- Modal Header -->
+            <div class="px-4 py-3 border-bottom border-slate-800 d-flex align-items-center justify-content-between" style="background: rgba(30, 41, 59, 0.6); border-color: rgba(51, 65, 85, 0.6) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 rounded-3 text-indigo-300" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)); border: 1px solid rgba(99, 102, 241, 0.3);">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 font-weight-700 text-white tracking-tight" id="modalHeaderTitle">✨ Approve Leave & Delegate Tasks</h5>
+                        <p class="m-0 text-muted small" style="font-size: 0.75rem;">Reassign active tasks to available team members before final approval.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Employee Context Banner -->
+            <div class="px-4 py-3 d-flex flex-wrap align-items-center justify-content-between gap-3" style="background: rgba(30, 27, 75, 0.4); border-bottom: 1px solid rgba(49, 46, 129, 0.4);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar-circle bg-primary bg-opacity-20 text-primary font-weight-700" style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;" id="modalUserAvatar">
+                        M
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="font-weight-600 text-white" id="modalEmpName">Employee</span>
+                            <span class="badge rounded-pill bg-purple bg-opacity-20 text-purple border border-purple border-opacity-30 px-2 py-0.5" id="modalLeaveBadge">Sick Leave</span>
+                        </div>
+                        <small class="text-muted" id="modalEmpRole">Active Tasks Delegation Required</small>
+                    </div>
+                </div>
+                <div class="badge bg-warning bg-opacity-15 text-warning border border-warning border-opacity-30 px-3 py-2 rounded-3 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span id="modalTasksAlert">3 active task(s) require delegation before authorization</span>
+                </div>
+            </div>
+
+            <!-- Form & Drag & Drop Body -->
+            <form id="hrReassignForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="remarks" id="reassignFormRemarks" value="Tasks delegated and leave approved by HR.">
+
+                <div class="p-4">
+                    <div class="row g-4 min-vh-40">
+                        <!-- Left Column: Pending Tasks -->
+                        <div class="col-12 col-lg-5">
+                            <div class="p-3 rounded-3 shadow-inner h-100" style="background: rgba(2, 6, 23, 0.5); border: 1px solid rgba(51, 65, 85, 0.6);">
+                                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-slate-800">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="spinner-grow spinner-grow-sm text-indigo-400" role="status"></span>
+                                        <h6 class="m-0 font-weight-600 text-white">Pending Tasks (<span id="pendingCountText">3</span>)</h6>
+                                    </div>
+                                    <small class="text-muted bg-dark px-2 py-0.5 rounded border border-slate-700" style="font-size:0.7rem;">Drag card to assign</small>
+                                </div>
+
+                                <div id="pendingTaskList" class="space-y-3" style="max-height: 360px; overflow-y: auto;">
+                                    <!-- Dynamic Task Cards -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Available Team Drop Zones -->
+                        <div class="col-12 col-lg-7">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="m-0 font-weight-600 text-white">
+                                    <i class="fa-solid fa-user-check text-purple-400 me-2"></i>Available Team Members (Drop Zones)
+                                </h6>
+                                <button type="button" id="autoBalanceBtn" onclick="autoBalanceWorkload()" class="btn btn-sm btn-outline-indigo rounded-3 px-3 py-1 font-weight-500" style="color: #a5b4fc; border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.1);">
+                                    <i class="fa-solid fa-wand-magic-sparkles me-1 text-indigo-400"></i> Auto-Balance Workload
+                                </button>
+                            </div>
+
+                            <div id="teamMembersList" class="space-y-3" style="max-height: 360px; overflow-y: auto;">
+                                <!-- Dynamic Team Member Drop Zones -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Progress & Actions -->
+                <div class="px-4 py-3 border-top border-slate-800 d-flex flex-wrap align-items-center justify-between gap-3" style="background: rgba(2, 6, 23, 0.8); border-color: rgba(51, 65, 85, 0.8) !important;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="progress" style="width: 110px; height: 8px; background: rgba(51, 65, 85, 0.6); border-radius: 4px;">
+                            <div id="reassignProgressBar" class="progress-bar bg-gradient-to-r from-indigo-500 to-purple-500" role="progressbar" style="width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                        <small class="text-slate-300 font-weight-500" id="progressStatusText">0 of 3 reassigned (0%)</small>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        <button type="button" onclick="resetTaskState()" class="btn btn-sm btn-outline-secondary px-3 py-2 rounded-3 text-slate-400">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light px-3 py-2 rounded-3" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="submitReassignBtn" disabled class="btn btn-sm px-4 py-2 rounded-3 font-weight-600 text-white" style="background: rgba(51, 65, 85, 0.8); cursor: not-allowed; transition: all 0.2s;">
+                            Approve & Route <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Standard Reject Modal -->
+<div class="modal fade text-start" id="hrRejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-secondary text-white">
+            <div class="modal-header border-bottom border-secondary">
+                <h6 class="modal-title font-heading" id="rejectModalTitle">Reject Leave Request</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="hrRejectForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="small text-white mb-3" id="rejectModalText"></p>
+                    <div class="mb-3">
+                        <label for="reject_remarks" class="form-label small text-muted font-weight-500">Rejection Reason (Required)</label>
+                        <textarea name="remarks" id="reject_remarks" class="form-control glass-input text-white" rows="3" placeholder="Enter reason..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Confirm Rejection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let reassignModalInst;
+    let rejectModalInst;
+
+    const MOCK_TASKS = [
+        { id: "task-1", title: "Fix Login API Timeout & Auth Token Renewal", priority: "high", hours: 4, category: "Backend API", assignedTo: null },
+        { id: "task-2", title: "Update User Auth Documentation & Specs", priority: "medium", hours: 2, category: "Documentation", assignedTo: null },
+        { id: "task-3", title: "Refactor Dashboard UI Components", priority: "low", hours: 6, category: "Frontend UI", assignedTo: null }
+    ];
+
+    const MOCK_TEAM = [
+        { id: "m-1", name: "Sarah Connor", role: "Senior Fullstack Lead", baseLoad: 2, maxCap: 6 },
+        { id: "m-2", name: "John Smith", role: "Fullstack Engineer", baseLoad: 3, maxCap: 5 },
+        { id: "m-3", name: "Elena Rostova", role: "Backend Architect", baseLoad: 4, maxCap: 5 }
+    ];
+
+    let currentTasks = JSON.parse(JSON.stringify(MOCK_TASKS));
+    let draggedTaskId = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const reassignEl = document.getElementById('hrReassignModal');
+        if (reassignEl) reassignModalInst = new bootstrap.Modal(reassignEl);
+
+        const rejectEl = document.getElementById('hrRejectModal');
+        if (rejectEl) rejectModalInst = new bootstrap.Modal(rejectEl);
+
+        renderReassignUI();
+    });
+
+    function openHRActionModal(reqId, action, username) {
+        if (action === 'approve') {
+            document.getElementById('hrReassignForm').action = `/hr/leave-request/${reqId}/approve/`;
+            document.getElementById('modalEmpName').textContent = username;
+            document.getElementById('modalUserAvatar').textContent = username.charAt(0).toUpperCase();
+            resetTaskState();
+            if (reassignModalInst) reassignModalInst.show();
+        } else {
+            document.getElementById('hrRejectForm').action = `/hr/leave-request/${reqId}/reject/`;
+            document.getElementById('rejectModalTitle').textContent = `Reject Request — ${username}`;
+            document.getElementById('rejectModalText').textContent = `Are you sure you want to reject the leave request for ${username}? Please provide the reason below.`;
+            if (rejectModalInst) rejectModalInst.show();
+        }
+    }
+
+    function renderReassignUI() {
+        const pendingContainer = document.getElementById('pendingTaskList');
+        const teamContainer = document.getElementById('teamMembersList');
+        if (!pendingContainer || !teamContainer) return;
+
+        const pending = currentTasks.filter(t => !t.assignedTo);
+        document.getElementById('pendingCountText').textContent = pending.length;
+
+        // Render Pending Tasks
+        if (pending.length === 0) {
+            pendingContainer.innerHTML = `
+                <div class="text-center p-4 rounded-3 border border-dashed border-slate-800" style="background: rgba(15, 23, 42, 0.4);">
+                    <i class="fa-solid fa-circle-check fa-2x text-emerald-400 mb-2"></i>
+                    <p class="small text-white font-weight-600 m-0">All tasks delegated!</p>
+                    <small class="text-muted">You can now click 'Approve & Route'.</small>
+                </div>`;
+        } else {
+            pendingContainer.innerHTML = pending.map(task => {
+                const priorityBadge = task.priority === 'high' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
+                                      task.priority === 'medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                                      'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+                return `
+                    <div draggable="true" ondragstart="handleDragStart(event, '${task.id}')" ondragend="handleDragEnd()" class="p-3 rounded-3 mb-2 shadow-sm transition-all" style="background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(51, 65, 85, 0.8); cursor: grab;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fa-solid fa-grip-vertical text-slate-500 mt-1"></i>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="small font-weight-600 text-white text-truncate">${task.title}</div>
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <span class="badge ${priorityBadge} border px-2 py-0.5" style="font-size:0.65rem;">${task.priority.toUpperCase()}</span>
+                                    <span class="badge bg-dark text-slate-300 border border-slate-700 px-2 py-0.5" style="font-size:0.65rem;">${task.category}</span>
+                                    <small class="text-muted ms-auto" style="font-size:0.65rem;"><i class="fa-solid fa-clock me-1"></i>${task.hours}h est.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // Render Team Members Drop Zones
+        teamContainer.innerHTML = MOCK_TEAM.map(member => {
+            const assigned = currentTasks.filter(t => t.assignedTo === member.id);
+            const totalLoad = member.baseLoad + assigned.length;
+            const pct = Math.min(100, Math.round((totalLoad / member.maxCap) * 100));
+
+            let statusLabel = "High Capacity";
+            let statusBadge = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+            let barColor = "bg-emerald-500";
+
+            if (pct > 80) {
+                statusLabel = "Heavy Load";
+                statusBadge = "bg-rose-500/10 text-rose-400 border-rose-500/30";
+                barColor = "bg-rose-500";
+            } else if (pct > 50) {
+                statusLabel = "Med Capacity";
+                statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+                barColor = "bg-amber-500";
+            }
+
+            return `
+                <div ondragover="handleDragOver(event)" ondrop="handleDrop(event, '${member.id}')" class="p-3 rounded-3 mb-3 transition-all" style="background: rgba(2, 6, 23, 0.4); border: 1px border-slate-800;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div>
+                            <span class="small font-weight-600 text-white">${member.name}</span>
+                            <small class="text-muted ms-2">(${member.role})</small>
+                        </div>
+                        <span class="badge ${statusBadge} border px-2 py-0.5" style="font-size:0.65rem;">${statusLabel}</span>
+                    </div>
+                    
+                    <div class="progress mb-2" style="height: 6px; background: rgba(51, 65, 85, 0.6);">
+                        <div class="progress-bar ${barColor}" style="width: ${pct}%;"></div>
+                    </div>
+
+                    <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.6); min-height: 42px;">
+                        ${assigned.length === 0 ? `
+                            <div class="text-center text-slate-500 fst-italic" style="font-size:0.75rem;">Drop tasks here to reassign</div>
+                        ` : assigned.map(t => `
+                            <div class="d-flex align-items-center justify-content-between px-2 py-1 mb-1 rounded" style="background: rgba(49, 46, 129, 0.4); border: 1px solid rgba(99, 102, 241, 0.3); font-size:0.75rem;">
+                                <span class="text-slate-200 text-truncate"><i class="fa-solid fa-check text-indigo-400 me-1"></i>${t.title}</span>
+                                <button type="button" onclick="unassignTask('${t.id}')" class="btn btn-link text-slate-400 hover-text-danger p-0 ms-2" style="font-size:0.75rem;"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+        }).join('');
+
+        // Progress Math
+        const assignedCount = currentTasks.length - pending.length;
+        const totalCount = currentTasks.length;
+        const pctAll = Math.round((assignedCount / totalCount) * 100);
+
+        document.getElementById('reassignProgressBar').style.width = `${pctAll}%`;
+        document.getElementById('progressStatusText').textContent = `${assignedCount} of ${totalCount} reassigned (${pctAll}%)`;
+
+        const submitBtn = document.getElementById('submitReassignBtn');
+        if (assignedCount === totalCount) {
+            submitBtn.disabled = false;
+            submitBtn.style.background = 'linear-gradient(135deg, #4f46e5, #9333ea)';
+            submitBtn.style.cursor = 'pointer';
+            submitBtn.style.boxShadow = '0 10px 25px -5px rgba(147, 51, 234, 0.4)';
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.style.background = 'rgba(51, 65, 85, 0.8)';
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.style.boxShadow = 'none';
+        }
+    }
+
+    function handleDragStart(e, taskId) {
+        draggedTaskId = taskId;
+        e.dataTransfer.setData("text/plain", taskId);
+    }
+    function handleDragOver(e) {
+        e.preventDefault();
+    }
+    function handleDrop(e, memberId) {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData("text/plain") || draggedTaskId;
+        if (taskId) {
+            currentTasks = currentTasks.map(t => t.id === taskId ? { ...t, assignedTo: memberId } : t);
+            renderReassignUI();
+        }
+    }
+    function unassignTask(taskId) {
+        currentTasks = currentTasks.map(t => t.id === taskId ? { ...t, assignedTo: null } : t);
+        renderReassignUI();
+    }
+    function autoBalanceWorkload() {
+        const unassigned = currentTasks.filter(t => !t.assignedTo);
+        unassigned.forEach(task => {
+            let lowestMem = MOCK_TEAM[0];
+            let minLoad = Infinity;
+            MOCK_TEAM.forEach(mem => {
+                const count = currentTasks.filter(t => t.assignedTo === mem.id).length;
+                const ratio = (mem.baseLoad + count) / mem.maxCap;
+                if (ratio < minLoad) {
+                    minLoad = ratio;
+                    lowestMem = mem;
+                }
+            });
+            currentTasks = currentTasks.map(t => t.id === task.id ? { ...t, assignedTo: lowestMem.id } : t);
+        });
+        renderReassignUI();
+    }
+    function resetTaskState() {
+        currentTasks = JSON.parse(JSON.stringify(MOCK_TASKS));
+        renderReassignUI();
+    }
+</script>
+{% endblock %}
+

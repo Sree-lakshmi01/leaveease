@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Employees - LeaveEase{% endblock %}
+{% block page_title %}Employee Management{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-white m-0"><i class="fa-solid fa-users me-2 text-primary"></i>All Employees</h5>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Designation</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Date Joined</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in employees %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if emp.profile_pic %}
+                                        <img src="{{ emp.profile_pic.url }}" alt="Profile" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold bg-secondary" style="width: 36px; height: 36px; font-size: 0.95rem;">
+                                            {{ emp.username|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <span class="text-white fw-semibold d-block" style="font-size: 0.9rem;">{{ emp.get_full_name|default:emp.username }}</span>
+                                        <small class="text-secondary" style="font-size: 0.75rem;">@{{ emp.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ emp.department|default:"--" }}</td>
+                            <td>{{ emp.designation|default:"--" }}</td>
+                            <td>{{ emp.email }}</td>
+                            <td>{{ emp.phone|default:"--" }}</td>
+                            <td>{{ emp.date_of_joining|default:emp.date_joined|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'admin_employee_detail' emp.pk %}" class="btn btn-sm btn-gradient-primary" style="font-size: 0.75rem; border-radius: 6px; padding: 0.35rem 0.75rem;">
+                                    <i class="fa-solid fa-user-gear me-1"></i> Manage Leaves & Balances
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">No employees registered in the system.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

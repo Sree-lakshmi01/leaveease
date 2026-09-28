@@ -1,0 +1,871 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}HR Dashboard - LeaveEase{% endblock %}
+{% block page_title %}HR Management Dashboard{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Header Banner -->
+    <div class="glass-card mb-4 p-4 position-relative overflow-hidden">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 position-relative style-z2">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-warning text-dark font-weight-600 px-3 py-1 rounded-pill">
+                        <i class="fa-solid fa-user-shield me-1"></i> HR Review Tier
+                    </span>
+                    <span class="text-muted small">• Step 1 Approval Stage</span>
+                </div>
+                <h3 class="font-heading m-0">Welcome back, {{ request.user.first_name|default:request.user.username }}!</h3>
+                <p class="text-muted m-0 small mt-1">Review employee leave submissions and forward qualified requests to Admin for final approval.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'hr_leave_requests' %}" class="btn btn-outline-light glass-input">
+                    <i class="fa-solid fa-list me-1"></i> All Requests
+                </a>
+                <a href="{% url 'hr_employees' %}" class="btn btn-primary-grad">
+                    <i class="fa-solid fa-users me-1"></i> Employee Directory
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Metrics Grid -->
+    <div class="row g-3 mb-4">
+        <!-- HR Pending -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="glass-card p-3 d-flex align-items-center gap-3">
+                <div class="stat-icon-wrap bg-warning bg-opacity-15 text-warning rounded-3 p-3">
+                    <i class="fa-solid fa-clock-rotate-left fa-xl"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 text-uppercase font-heading" style="font-size: 0.75rem; letter-spacing: 0.05em;">HR Pending</h6>
+                    <h3 class="font-heading m-0 text-warning">{{ stats.hr_pending }}</h3>
+                    <small class="text-muted" style="font-size: 0.75rem;">Awaiting HR review</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Pending -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="glass-card p-3 d-flex align-items-center gap-3">
+                <div class="stat-icon-wrap bg-info bg-opacity-15 text-info rounded-3 p-3">
+                    <i class="fa-solid fa-paper-plane fa-xl"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 text-uppercase font-heading" style="font-size: 0.75rem; letter-spacing: 0.05em;">Admin Pending</h6>
+                    <h3 class="font-heading m-0 text-info">{{ stats.admin_pending }}</h3>
+                    <small class="text-muted" style="font-size: 0.75rem;">Forwarded to Admin</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approved This Month -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="glass-card p-3 d-flex align-items-center gap-3">
+                <div class="stat-icon-wrap bg-success bg-opacity-15 text-success rounded-3 p-3">
+                    <i class="fa-solid fa-circle-check fa-xl"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1 text-uppercase font-heading" style="font-size: 0.75rem; letter-spacing: 0.05em;">Approved (This Month)</h6>
+                    <h3 class="font-heading m-0 text-success">{{ stats.approved_month }}</h3>
+                    <small class="text-muted" style="font-size: 0.75rem;">Final approval granted</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employees Overview -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <a href="{% url 'hr_employees' %}" class="text-decoration-none">
+                <div class="glass-card p-3 d-flex align-items-center gap-3 style-hover-card">
+                    <div class="stat-icon-wrap bg-primary bg-opacity-15 text-primary rounded-3 p-3">
+                        <i class="fa-solid fa-users fa-xl"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase font-heading" style="font-size: 0.75rem; letter-spacing: 0.05em;">Total Employees</h6>
+                        <h3 class="font-heading m-0 text-primary">{{ stats.total_employees|default:0 }}</h3>
+                        <small class="text-muted" style="font-size: 0.75rem;">{{ stats.active_employees|default:0 }} Active • {{ stats.on_leave_today|default:0 }} On Leave</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- HR Analytics & Review Velocity Section -->
+    <div class="row g-4 mb-4">
+        <!-- Leave Category Breakdown Chart -->
+        <div class="col-12 col-lg-5 col-xl-4">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="font-heading m-0 text-white">
+                        <i class="fa-solid fa-chart-pie text-primary me-2"></i>Leave Category Breakdown
+                    </h6>
+                    <small class="text-muted" style="font-size:0.75rem;">All Submissions</small>
+                </div>
+                <div style="height: 210px; position: relative;">
+                    <canvas id="hrLeaveTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Review Velocity Trend Chart -->
+        <div class="col-12 col-lg-7 col-xl-8">
+            <div class="glass-card p-4 h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="font-heading m-0 text-white">
+                        <i class="fa-solid fa-chart-line text-info me-2"></i>Monthly Review & Approval Trends
+                    </h6>
+                    <span class="badge bg-info bg-opacity-15 text-info px-2.5 py-1 rounded-pill" style="font-size:0.7rem;">
+                        <i class="fa-solid fa-bolt me-1"></i>Review Velocity
+                    </span>
+                </div>
+                <div style="height: 210px; position: relative;">
+                    <canvas id="hrMonthlyTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row g-4">
+        <!-- Actionable Pending Requests Table -->
+        <div class="col-12 col-lg-8">
+            <div class="glass-card p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <div>
+                        <h5 class="font-heading m-0">
+                            <i class="fa-solid fa-clipboard-check text-warning me-2"></i>Actionable Requests (HR Pending)
+                        </h5>
+                        <small class="text-muted">Applications waiting for initial HR screening</small>
+                    </div>
+                    <span class="badge bg-warning bg-opacity-20 text-warning px-3 py-1 rounded-pill font-weight-600">
+                        {{ pending_requests.count }} Pending
+                    </span>
+                </div>
+
+                {% if pending_requests %}
+                <!-- Bulk Actions & Instant Search Bar -->
+                <form id="hrBulkForm" method="POST" action="{% url 'hr_bulk_approve' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="bulk_action" id="bulkActionType" value="approve">
+
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 bg-dark bg-opacity-30 p-2 rounded-3 border border-slate-800">
+                        <!-- Instant Search -->
+                        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 380px;">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text glass-input border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                                <input type="text" id="pendingSearchInput" class="form-control glass-input border-start-0 text-white" placeholder="Search by employee, department, reason..." onkeyup="filterPendingRequests()">
+                            </div>
+                        </div>
+
+                        <!-- Bulk Action Controls -->
+                        <div id="bulkActionBar" class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary text-slate-300 px-2.5 py-1 rounded-2 small" id="selectedCountBadge">0 Selected</span>
+                            <button type="button" id="bulkApproveBtn" disabled onclick="submitBulkAction('approve')" class="btn btn-sm btn-success rounded-pill px-3 py-1 font-weight-600 opacity-50" style="transition: all 0.2s;">
+                                <i class="fa-solid fa-check-double me-1"></i> Bulk Approve & Forward
+                            </button>
+                            <button type="button" id="bulkRejectBtn" disabled onclick="submitBulkAction('reject')" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 opacity-50" style="transition: all 0.2s;">
+                                <i class="fa-solid fa-xmark me-1"></i> Reject Selected
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle custom-table" id="pendingRequestsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 38px;">
+                                        <input type="checkbox" id="selectAllCheckbox" class="form-check-input" onchange="toggleSelectAll(this)">
+                                    </th>
+                                    <th>Employee</th>
+                                    <th>Leave Type</th>
+                                    <th>Duration</th>
+                                    <th>Reason</th>
+                                    <th>Attachment</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in pending_requests %}
+                                <tr class="pending-row" data-search="{{ req.user.get_full_name|default:req.user.username }} {{ req.user.department|default:'' }} {{ req.leave_type.name }} {{ req.reason }}">
+                                    <td>
+                                        <input type="checkbox" name="request_ids" value="{{ req.pk }}" class="form-check-input row-checkbox" onchange="updateBulkActionBar()">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar-circle bg-primary bg-opacity-20 text-primary font-weight-700" style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                                                {{ req.user.username|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <a href="{% url 'hr_employee_detail' req.user.pk %}" class="font-weight-600 text-white text-decoration-none hover-primary">{{ req.user.get_full_name|default:req.user.username }}</a>
+                                                <div class="text-muted small" style="font-size: 0.75rem;">{{ req.user.department|default:"General" }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge rounded-pill px-2.5 py-1" style="background-color: {{ req.leave_type.color_code }}22; color: {{ req.leave_type.color_code }}; border: 1px solid {{ req.leave_type.color_code }}44;">
+                                            {{ req.leave_type.name }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="small font-weight-500 text-white">{{ req.start_date }} to {{ req.end_date }}</div>
+                                        <div class="text-muted small">{{ req.duration }} Day{{ req.duration|pluralize }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="small text-muted d-inline-block text-truncate" style="max-width: 150px;" title="{{ req.reason }}">
+                                            {{ req.reason }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if req.medical_certificate %}
+                                            <a href="{{ req.medical_certificate.url }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-2 py-0" style="font-size: 0.75rem;">
+                                                <i class="fa-solid fa-paperclip"></i> View
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="d-flex gap-1 justify-content-end align-items-center">
+                                            <button type="button" class="btn btn-sm px-2.5 py-1" style="font-size: 0.75rem; border-radius: 20px; background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.3)';" onmouseout="this.style.background='rgba(168,85,247,0.15)';" onclick="openOffcanvasFromElement(this)"
+                                                data-id="{{ req.pk }}"
+                                                data-employee-name="{{ req.user.get_full_name|default:req.user.username }}"
+                                                data-department="{{ req.user.department|default:'Engineering' }}"
+                                                data-designation="{{ req.user.designation|default:'Employee' }}"
+                                                data-avatar="{% if req.user.profile_pic %}{{ req.user.profile_pic.url }}{% endif %}"
+                                                data-leave-type="{{ req.leave_type.name }}"
+                                                data-leave-color="{{ req.leave_type.color_code }}"
+                                                data-start-date="{{ req.start_date }}"
+                                                data-end-date="{{ req.end_date }}"
+                                                data-duration="{{ req.duration }}"
+                                                data-reason="{{ req.reason }}"
+                                                data-status="{{ req.status }}"
+                                                data-status-display="{{ req.get_status_display }}"
+                                                data-medical-certificate="{% if req.medical_certificate %}{{ req.medical_certificate.url }}{% endif %}"
+                                                data-admin-remarks="{{ req.admin_remarks|default:'' }}"
+                                                data-rejection-reason="{{ req.rejection_reason|default:'' }}"
+                                                data-hr-approved-by="{% if req.hr_approved_by %}{{ req.hr_approved_by.get_full_name|default:req.hr_approved_by.username }}{% endif %}"
+                                                data-hr-approved-at="{% if req.hr_approved_at %}{{ req.hr_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                                data-admin-approved-by="{% if req.admin_approved_by %}{{ req.admin_approved_by.get_full_name|default:req.admin_approved_by.username }}{% endif %}"
+                                                data-admin-approved-at="{% if req.admin_approved_at %}{{ req.admin_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                                data-applied-on="{% if req.applied_on %}{{ req.applied_on|date:'M d, Y • h:i A' }}{% endif %}"
+                                                data-balances="{{ req.user_balances_json|escape }}"
+                                                data-reassignments="{{ req.task_reassignments_json|escape }}"
+                                            >
+                                                <i class="fa-solid fa-sidebar me-1"></i> ✨ View Details
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-success rounded-3 px-2 py-1" title="Approve & Forward to Admin" onclick="openHRActionModal({{ req.pk }}, 'approve', '{{ req.user.username }}')">
+                                                <i class="fa-solid fa-check me-1"></i> Approve
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger rounded-3 px-2 py-1" title="Reject Leave Request" onclick="openHRActionModal({{ req.pk }}, 'reject', '{{ req.user.username }}')">
+                                                <i class="fa-solid fa-xmark me-1"></i> Reject
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+                {% include 'includes/detailed_leave_offcanvas.html' %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3 text-muted">
+                        <i class="fa-solid fa-circle-check fa-3x text-success bg-success bg-opacity-10 p-3 rounded-circle"></i>
+                    </div>
+                    <h6 class="font-heading text-white mb-1">All Caught Up!</h6>
+                    <p class="text-muted small m-0">There are currently no leave requests pending HR approval.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar Column: Who's On Leave & HR Activity Feed -->
+        <div class="col-12 col-lg-4">
+            <div class="d-flex flex-column gap-4 h-100">
+                
+                <!-- Who's On Leave Today Widget -->
+                <div class="glass-card p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="font-heading m-0 text-white">
+                            <i class="fa-solid fa-plane-departure text-warning me-2"></i>Who's On Leave Today
+                        </h6>
+                        <span class="badge bg-warning text-dark font-weight-600 rounded-pill px-2.5 py-0.5" style="font-size: 0.75rem;">
+                            {{ stats.on_leave_today|default:0 }} Active
+                        </span>
+                    </div>
+
+                    {% if on_leave_today_list %}
+                    <div class="d-flex flex-column gap-2" style="max-height: 220px; overflow-y: auto;">
+                        {% for item in on_leave_today_list %}
+                        <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(51, 65, 85, 0.5);">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle bg-warning bg-opacity-20 text-warning font-weight-700" style="width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem;">
+                                    {{ item.user.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'hr_employee_detail' item.user.pk %}" class="small font-weight-600 text-white text-decoration-none hover-primary">{{ item.user.get_full_name|default:item.user.username }}</a>
+                                    <div class="text-muted" style="font-size:0.7rem;">{{ item.leave_type.name }} • Return: {{ item.end_date }}</div>
+                                </div>
+                            </div>
+                            <span class="badge bg-success bg-opacity-15 text-success border border-success border-opacity-30 rounded-pill px-2 py-0.5" style="font-size:0.65rem;">Approved</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3 text-muted">
+                        <i class="fa-solid fa-user-check opacity-40 fa-lg mb-1 d-block"></i>
+                        <small>No team members are out on leave today.</small>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Activity Feed / Recent HR Actions Sidebar -->
+                <div class="glass-card p-4 flex-grow-1">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="font-heading m-0 text-white">
+                            <i class="fa-solid fa-list-check text-info me-2"></i>HR Activity Feed
+                        </h6>
+                        <span class="badge bg-secondary text-muted small">Recent</span>
+                    </div>
+
+                    {% if recent_activity %}
+                    <div class="timeline-feed">
+                        {% for item in recent_activity %}
+                        <div class="d-flex gap-3 mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                            <div class="flex-shrink-0">
+                                {% if item.status == 'ADMIN_PENDING' or item.status == 'APPROVED' %}
+                                    <div class="rounded-circle bg-success bg-opacity-15 text-success d-flex align-items-center justify-content-center" style="width:34px; height:34px;">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                {% else %}
+                                    <div class="rounded-circle bg-danger bg-opacity-15 text-danger d-flex align-items-center justify-content-center" style="width:34px; height:34px;">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="small font-weight-600 text-white">
+                                    <a href="{% url 'hr_employee_detail' item.user.pk %}" class="text-white text-decoration-none hover-primary">{{ item.user.get_full_name|default:item.user.username }}</a>
+                                </div>
+                                <div class="text-muted small mt-0.5">
+                                    {{ item.leave_type.name }} ({{ item.start_date }} to {{ item.end_date }})
+                                </div>
+                                {% if item.admin_remarks or item.rejection_reason %}
+                                <div class="small text-muted fst-italic mt-1" style="font-size:0.75rem;">
+                                    Note: {{ item.rejection_reason|default:item.admin_remarks }}
+                                </div>
+                                {% endif %}
+                                <div class="d-flex align-items-center justify-content-between mt-1">
+                                    <span class="badge rounded-pill px-2 py-0.5" style="font-size:0.7rem; 
+                                        {% if item.status == 'HR_PENDING' %}background:#f59e0b22; color:#f59e0b; border:1px solid #f59e0b44;
+                                        {% elif item.status == 'ADMIN_PENDING' %}background:#0284c722; color:#0284c7; border:1px solid #0284c744;
+                                        {% elif item.status == 'APPROVED' %}background:#10b98122; color:#10b981; border:1px solid #10b98144;
+                                        {% else %}background:#ef444422; color:#ef4444; border:1px solid #ef444444;{% endif %}">
+                                        {{ item.get_status_display }}
+                                    </span>
+                                    <small class="text-muted" style="font-size:0.7rem;">{{ item.hr_approved_at|timesince }} ago</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-clock-rotate-left fa-2x mb-2 opacity-50"></i>
+                        <p class="small m-0">No recent HR actions recorded yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dark Glassmorphism Approve Leave & Reassign Work Modal -->
+<div class="modal fade text-start" id="hrReassignModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 rounded-4 shadow-2xl overflow-hidden" style="background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(16px); border: 1px solid rgba(51, 65, 85, 0.8) !important; color: #f8fafc;">
+            
+            <!-- Modal Header -->
+            <div class="px-4 py-3 border-bottom border-slate-800 d-flex align-items-center justify-content-between" style="background: rgba(30, 41, 59, 0.6); border-color: rgba(51, 65, 85, 0.6) !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 rounded-3 text-indigo-300" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)); border: 1px solid rgba(99, 102, 241, 0.3);">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 font-weight-700 text-white tracking-tight" id="modalHeaderTitle">✨ Approve Leave & Delegate Tasks</h5>
+                        <p class="m-0 text-muted small" style="font-size: 0.75rem;">Reassign active tasks to available team members before final approval.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Employee Context Banner -->
+            <div class="px-4 py-3 d-flex flex-wrap align-items-center justify-content-between gap-3" style="background: rgba(30, 27, 75, 0.4); border-bottom: 1px solid rgba(49, 46, 129, 0.4);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar-circle bg-primary bg-opacity-20 text-primary font-weight-700" style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;" id="modalUserAvatar">
+                        M
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="font-weight-600 text-white" id="modalEmpName">Employee</span>
+                            <span class="badge rounded-pill bg-purple bg-opacity-20 text-purple border border-purple border-opacity-30 px-2 py-0.5" id="modalLeaveBadge">Sick Leave</span>
+                        </div>
+                        <small class="text-muted" id="modalEmpRole">Active Tasks Delegation Required</small>
+                    </div>
+                </div>
+                <div class="badge bg-warning bg-opacity-15 text-warning border border-warning border-opacity-30 px-3 py-2 rounded-3 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span id="modalTasksAlert">3 active task(s) require delegation before authorization</span>
+                </div>
+            </div>
+
+            <!-- Form & Drag & Drop Body -->
+            <form id="hrReassignForm" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="remarks" id="reassignFormRemarks" value="Tasks delegated and leave approved by HR.">
+
+                <div class="p-4">
+                    <div class="row g-4 min-vh-40">
+                        <!-- Left Column: Pending Tasks -->
+                        <div class="col-12 col-lg-5">
+                            <div class="p-3 rounded-3 shadow-inner h-100" style="background: rgba(2, 6, 23, 0.5); border: 1px solid rgba(51, 65, 85, 0.6);">
+                                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-slate-800">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="spinner-grow spinner-grow-sm text-indigo-400" role="status"></span>
+                                        <h6 class="m-0 font-weight-600 text-white">Pending Tasks (<span id="pendingCountText">3</span>)</h6>
+                                    </div>
+                                    <small class="text-muted bg-dark px-2 py-0.5 rounded border border-slate-700" style="font-size:0.7rem;">Drag card to assign</small>
+                                </div>
+
+                                <div id="pendingTaskList" class="space-y-3" style="max-height: 360px; overflow-y: auto;">
+                                    <!-- Dynamic Task Cards -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Available Team Drop Zones -->
+                        <div class="col-12 col-lg-7">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h6 class="m-0 font-weight-600 text-white">
+                                    <i class="fa-solid fa-user-check text-purple-400 me-2"></i>Available Team Members (Drop Zones)
+                                </h6>
+                                <button type="button" id="autoBalanceBtn" onclick="autoBalanceWorkload()" class="btn btn-sm btn-outline-indigo rounded-3 px-3 py-1 font-weight-500" style="color: #a5b4fc; border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.1);">
+                                    <i class="fa-solid fa-wand-magic-sparkles me-1 text-indigo-400"></i> Auto-Balance Workload
+                                </button>
+                            </div>
+
+                            <div id="teamMembersList" class="space-y-3" style="max-height: 360px; overflow-y: auto;">
+                                <!-- Dynamic Team Member Drop Zones -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Progress & Actions -->
+                <div class="px-4 py-3 border-top border-slate-800 d-flex flex-wrap align-items-center justify-between gap-3" style="background: rgba(2, 6, 23, 0.8); border-color: rgba(51, 65, 85, 0.8) !important;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="progress" style="width: 110px; height: 8px; background: rgba(51, 65, 85, 0.6); border-radius: 4px;">
+                            <div id="reassignProgressBar" class="progress-bar bg-gradient-to-r from-indigo-500 to-purple-500" role="progressbar" style="width: 0%; transition: width 0.3s ease;"></div>
+                        </div>
+                        <small class="text-slate-300 font-weight-500" id="progressStatusText">0 of 3 reassigned (0%)</small>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        <button type="button" onclick="resetTaskState()" class="btn btn-sm btn-outline-secondary px-3 py-2 rounded-3 text-slate-400">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light px-3 py-2 rounded-3" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="submitReassignBtn" disabled class="btn btn-sm px-4 py-2 rounded-3 font-weight-600 text-white" style="background: rgba(51, 65, 85, 0.8); cursor: not-allowed; transition: all 0.2s;">
+                            Approve & Route <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Standard Reject Modal -->
+<div class="modal fade text-start" id="hrRejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-secondary text-white">
+            <div class="modal-header border-bottom border-secondary">
+                <h6 class="modal-title font-heading" id="rejectModalTitle">Reject Leave Request</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="hrRejectForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="small text-white mb-3" id="rejectModalText"></p>
+                    <div class="mb-3">
+                        <label for="reject_remarks" class="form-label small text-muted font-weight-500">Rejection Reason (Required)</label>
+                        <textarea name="remarks" id="reject_remarks" class="form-control glass-input text-white" rows="3" placeholder="Enter reason..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary">
+                    <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Confirm Rejection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{ team_members_data|json_script:"teamMembersData" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let reassignModalInst;
+    let rejectModalInst;
+
+    const MOCK_TASKS = [
+        { id: "task-1", title: "Fix Login API Timeout & Auth Token Renewal", priority: "high", hours: 4, category: "Backend API", assignedTo: null },
+        { id: "task-2", title: "Update User Auth Documentation & Specs", priority: "medium", hours: 2, category: "Documentation", assignedTo: null },
+        { id: "task-3", title: "Refactor Dashboard UI Components", priority: "low", hours: 6, category: "Frontend UI", assignedTo: null }
+    ];
+
+    // Load team members dynamically from Django context json_script
+    let loadedTeamData = [];
+    try {
+        const jsonEl = document.getElementById('teamMembersData');
+        if (jsonEl && jsonEl.textContent) {
+            loadedTeamData = JSON.parse(jsonEl.textContent);
+        }
+    } catch (err) {
+        console.warn("Could not parse teamMembersData JSON script", err);
+    }
+
+    const MOCK_TEAM = loadedTeamData.length > 0 ? loadedTeamData : [
+        { id: "m-1", name: "Sarah Connor", role: "Senior Fullstack Lead", baseLoad: 2, maxCap: 6 },
+        { id: "m-2", name: "John Smith", role: "Fullstack Engineer", baseLoad: 3, maxCap: 5 },
+        { id: "m-3", name: "Elena Rostova", role: "Backend Architect", baseLoad: 4, maxCap: 5 }
+    ];
+
+    let currentTasks = JSON.parse(JSON.stringify(MOCK_TASKS));
+    let draggedTaskId = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const reassignEl = document.getElementById('hrReassignModal');
+        if (reassignEl) reassignModalInst = new bootstrap.Modal(reassignEl);
+
+        const rejectEl = document.getElementById('hrRejectModal');
+        if (rejectEl) rejectModalInst = new bootstrap.Modal(rejectEl);
+
+        renderReassignUI();
+        initHRCharts();
+    });
+
+    // Filtering Pending Requests Table
+    function filterPendingRequests() {
+        const query = document.getElementById('pendingSearchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('#pendingRequestsTable .pending-row');
+        rows.forEach(row => {
+            const searchData = (row.dataset.search || '').toLowerCase();
+            row.style.display = searchData.includes(query) ? '' : 'none';
+        });
+    }
+
+    // Bulk Action Checkboxes & State Management
+    function toggleSelectAll(master) {
+        const checkboxes = document.querySelectorAll('#pendingRequestsTable .row-checkbox');
+        checkboxes.forEach(cb => {
+            const row = cb.closest('tr');
+            if (row && row.style.display !== 'none') {
+                cb.checked = master.checked;
+            }
+        });
+        updateBulkActionBar();
+    }
+
+    function updateBulkActionBar() {
+        const checked = document.querySelectorAll('#pendingRequestsTable .row-checkbox:checked');
+        const count = checked.length;
+        const badge = document.getElementById('selectedCountBadge');
+        const approveBtn = document.getElementById('bulkApproveBtn');
+        const rejectBtn = document.getElementById('bulkRejectBtn');
+
+        if (badge) badge.textContent = `${count} Selected`;
+
+        if (count > 0) {
+            approveBtn.disabled = false;
+            approveBtn.classList.remove('opacity-50');
+            rejectBtn.disabled = false;
+            rejectBtn.classList.remove('opacity-50');
+        } else {
+            approveBtn.disabled = true;
+            approveBtn.classList.add('opacity-50');
+            rejectBtn.disabled = true;
+            rejectBtn.classList.add('opacity-50');
+        }
+    }
+
+    function submitBulkAction(action) {
+        document.getElementById('bulkActionType').value = action;
+        if (action === 'reject') {
+            const reason = prompt("Please enter rejection reason for selected requests:", "Bulk rejected by HR");
+            if (reason === null) return; // User cancelled
+            const hiddenRemarks = document.createElement('input');
+            hiddenRemarks.type = 'hidden';
+            hiddenRemarks.name = 'bulk_remarks';
+            hiddenRemarks.value = reason;
+            document.getElementById('hrBulkForm').appendChild(hiddenRemarks);
+        }
+        document.getElementById('hrBulkForm').submit();
+    }
+
+    function openHRActionModal(reqId, action, username) {
+        if (action === 'approve') {
+            document.getElementById('hrReassignForm').action = `/hr/leave-request/${reqId}/approve/`;
+            document.getElementById('modalEmpName').textContent = username;
+            document.getElementById('modalUserAvatar').textContent = username.charAt(0).toUpperCase();
+            resetTaskState();
+            if (reassignModalInst) reassignModalInst.show();
+        } else {
+            document.getElementById('hrRejectForm').action = `/hr/leave-request/${reqId}/reject/`;
+            document.getElementById('rejectModalTitle').textContent = `Reject Request — ${username}`;
+            document.getElementById('rejectModalText').textContent = `Are you sure you want to reject the leave request for ${username}? Please provide the reason below.`;
+            if (rejectModalInst) rejectModalInst.show();
+        }
+    }
+
+    function renderReassignUI() {
+        const pendingContainer = document.getElementById('pendingTaskList');
+        const teamContainer = document.getElementById('teamMembersList');
+        if (!pendingContainer || !teamContainer) return;
+
+        const pending = currentTasks.filter(t => !t.assignedTo);
+        document.getElementById('pendingCountText').textContent = pending.length;
+
+        // Render Pending Tasks
+        if (pending.length === 0) {
+            pendingContainer.innerHTML = `
+                <div class="text-center p-4 rounded-3 border border-dashed border-slate-800" style="background: rgba(15, 23, 42, 0.4);">
+                    <i class="fa-solid fa-circle-check fa-2x text-emerald-400 mb-2"></i>
+                    <p class="small text-white font-weight-600 m-0">All tasks delegated!</p>
+                    <small class="text-muted">You can now click 'Approve & Route'.</small>
+                </div>`;
+        } else {
+            pendingContainer.innerHTML = pending.map(task => {
+                const priorityBadge = task.priority === 'high' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
+                                      task.priority === 'medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                                      'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+                return `
+                    <div draggable="true" ondragstart="handleDragStart(event, '${task.id}')" ondragend="handleDragEnd()" class="p-3 rounded-3 mb-2 shadow-sm transition-all" style="background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(51, 65, 85, 0.8); cursor: grab;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fa-solid fa-grip-vertical text-slate-500 mt-1"></i>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="small font-weight-600 text-white text-truncate">${task.title}</div>
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <span class="badge ${priorityBadge} border px-2 py-0.5" style="font-size:0.65rem;">${task.priority.toUpperCase()}</span>
+                                    <span class="badge bg-dark text-slate-300 border border-slate-700 px-2 py-0.5" style="font-size:0.65rem;">${task.category}</span>
+                                    <small class="text-muted ms-auto" style="font-size:0.65rem;"><i class="fa-solid fa-clock me-1"></i>${task.hours}h est.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // Render Team Members Drop Zones
+        teamContainer.innerHTML = MOCK_TEAM.map(member => {
+            const assigned = currentTasks.filter(t => t.assignedTo === member.id);
+            const totalLoad = member.baseLoad + assigned.length;
+            const pct = Math.min(100, Math.round((totalLoad / member.maxCap) * 100));
+
+            let statusLabel = "High Capacity";
+            let statusBadge = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+            let barColor = "bg-emerald-500";
+
+            if (pct > 80) {
+                statusLabel = "Heavy Load";
+                statusBadge = "bg-rose-500/10 text-rose-400 border-rose-500/30";
+                barColor = "bg-rose-500";
+            } else if (pct > 50) {
+                statusLabel = "Med Capacity";
+                statusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+                barColor = "bg-amber-500";
+            }
+
+            return `
+                <div ondragover="handleDragOver(event)" ondrop="handleDrop(event, '${member.id}')" class="p-3 rounded-3 mb-3 transition-all" style="background: rgba(2, 6, 23, 0.4); border: 1px border-slate-800;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            ${member.avatar ? `<img src="${member.avatar}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">` : `<div class="avatar-circle bg-primary text-white" style="width:24px; height:24px; border-radius:50%; font-size:0.65rem; display:flex; align-items:center; justify-content:center;">${member.name.charAt(0)}</div>`}
+                            <div>
+                                <span class="small font-weight-600 text-white">${member.name}</span>
+                                <small class="text-muted ms-1">(${member.role})</small>
+                            </div>
+                        </div>
+                        <span class="badge ${statusBadge} border px-2 py-0.5" style="font-size:0.65rem;">${statusLabel}</span>
+                    </div>
+                    
+                    <div class="progress mb-2" style="height: 6px; background: rgba(51, 65, 85, 0.6);">
+                        <div class="progress-bar ${barColor}" style="width: ${pct}%;"></div>
+                    </div>
+
+                    <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.6); min-height: 42px;">
+                        ${assigned.length === 0 ? `
+                            <div class="text-center text-slate-500 fst-italic" style="font-size:0.75rem;">Drop tasks here to reassign</div>
+                        ` : assigned.map(t => `
+                            <div class="d-flex align-items-center justify-content-between px-2 py-1 mb-1 rounded" style="background: rgba(49, 46, 129, 0.4); border: 1px solid rgba(99, 102, 241, 0.3); font-size:0.75rem;">
+                                <span class="text-slate-200 text-truncate"><i class="fa-solid fa-check text-indigo-400 me-1"></i>${t.title}</span>
+                                <button type="button" onclick="unassignTask('${t.id}')" class="btn btn-link text-slate-400 hover-text-danger p-0 ms-2" style="font-size:0.75rem;"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+        }).join('');
+
+        // Progress Math
+        const assignedCount = currentTasks.length - pending.length;
+        const totalCount = currentTasks.length;
+        const pctAll = Math.round((assignedCount / totalCount) * 100);
+
+        document.getElementById('reassignProgressBar').style.width = `${pctAll}%`;
+        document.getElementById('progressStatusText').textContent = `${assignedCount} of ${totalCount} reassigned (${pctAll}%)`;
+
+        const submitBtn = document.getElementById('submitReassignBtn');
+        if (assignedCount === totalCount) {
+            submitBtn.disabled = false;
+            submitBtn.style.background = 'linear-gradient(135deg, #4f46e5, #9333ea)';
+            submitBtn.style.cursor = 'pointer';
+            submitBtn.style.boxShadow = '0 10px 25px -5px rgba(147, 51, 234, 0.4)';
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.style.background = 'rgba(51, 65, 85, 0.8)';
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.style.boxShadow = 'none';
+        }
+    }
+
+    function handleDragStart(e, taskId) {
+        draggedTaskId = taskId;
+        e.dataTransfer.setData("text/plain", taskId);
+    }
+    function handleDragEnd() {}
+    function handleDragOver(e) {
+        e.preventDefault();
+    }
+    function handleDrop(e, memberId) {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData("text/plain") || draggedTaskId;
+        if (taskId) {
+            currentTasks = currentTasks.map(t => t.id === taskId ? { ...t, assignedTo: memberId } : t);
+            renderReassignUI();
+        }
+    }
+    function unassignTask(taskId) {
+        currentTasks = currentTasks.map(t => t.id === taskId ? { ...t, assignedTo: null } : t);
+        renderReassignUI();
+    }
+    function autoBalanceWorkload() {
+        const unassigned = currentTasks.filter(t => !t.assignedTo);
+        unassigned.forEach(task => {
+            let lowestMem = MOCK_TEAM[0];
+            let minLoad = Infinity;
+            MOCK_TEAM.forEach(mem => {
+                const count = currentTasks.filter(t => t.assignedTo === mem.id).length;
+                const ratio = (mem.baseLoad + count) / mem.maxCap;
+                if (ratio < minLoad) {
+                    minLoad = ratio;
+                    lowestMem = mem;
+                }
+            });
+            currentTasks = currentTasks.map(t => t.id === task.id ? { ...t, assignedTo: lowestMem.id } : t);
+        });
+        renderReassignUI();
+    }
+    function resetTaskState() {
+        currentTasks = JSON.parse(JSON.stringify(MOCK_TASKS));
+        renderReassignUI();
+    }
+
+    // Initialize Chart.js for HR Dashboard Analytics
+    function initHRCharts() {
+        fetch('/api/charts/')
+            .then(res => res.json())
+            .then(data => {
+                // Leave Category Breakdown (Doughnut Chart)
+                const doughnutEl = document.getElementById('hrLeaveTypeChart');
+                if (doughnutEl) {
+                    const ctx = doughnutEl.getContext('2d');
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.distribution.labels.length > 0 ? data.distribution.labels : ['Casual', 'Sick', 'Earned'],
+                            datasets: [{
+                                data: data.distribution.counts.length > 0 ? data.distribution.counts : [5, 3, 2],
+                                backgroundColor: data.distribution.colors.length > 0 ? data.distribution.colors : ['#3b82f6', '#ef4444', '#10b981'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        color: '#94a3b8',
+                                        font: { family: 'Inter', size: 11 }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Monthly Approval & Review Trends (Bar Chart)
+                const trendEl = document.getElementById('hrMonthlyTrendChart');
+                if (trendEl) {
+                    const ctx = trendEl.getContext('2d');
+                    const grad = ctx.createLinearGradient(0, 0, 0, 200);
+                    grad.addColorStop(0, '#38bdf8');
+                    grad.addColorStop(1, '#818cf8');
+
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.trends.labels.length > 0 ? data.trends.labels : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                            datasets: [{
+                                label: 'HR Reviews Completed',
+                                data: data.trends.counts.length > 0 ? data.trends.counts : [4, 8, 12, 6, 10, 15],
+                                backgroundColor: grad,
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                                    ticks: { color: '#94a3b8', stepSize: 2 }
+                                },
+                                x: {
+                                    grid: { display: false },
+                                    ticks: { color: '#94a3b8' }
+                                }
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(err => console.warn("Chart data fetch failed", err));
+    }
+</script>
+{% endblock %}

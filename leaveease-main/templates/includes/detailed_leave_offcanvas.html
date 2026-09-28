@@ -1,0 +1,539 @@
+<!-- Detailed Leave Request View (Slide-Out Offcanvas Drawer) -->
+<div id="detailedLeaveOffcanvasBackdrop" onclick="closeDetailedLeaveOffcanvas()" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.75); backdrop-filter: blur(4px); z-index: 1050; transition: opacity 0.3s ease;"></div>
+
+<div id="detailedLeaveOffcanvasDrawer" style="position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 95vw); background: #0f172a; border-left: 1px solid #1e293b; z-index: 1060; transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; justify-content: space-between; color: #f8fafc; font-family: 'Inter', system-ui, sans-serif; box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6); overflow: hidden;">
+    
+    <!-- ------------------------------------------------------------- -->
+    <!-- HEADER -->
+    <!-- ------------------------------------------------------------- -->
+    <div style="padding: 1.25rem 1.5rem; background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid rgba(30, 41, 59, 0.8); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px);">
+        <!-- Top bar: Close button, Title, Status badge -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <button type="button" onclick="closeDetailedLeaveOffcanvas()" style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(51, 65, 85, 0.6); color: #94a3b8; border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.background='rgba(51,65,85,0.8)'" onmouseout="this.style.color='#94a3b8'; this.style.background='rgba(30,41,59,0.6)'">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div>
+                    <h5 style="margin: 0; font-weight: 700; color: #f8fafc; font-size: 1.15rem; letter-spacing: -0.01em;">
+                        Leave Request Details
+                    </h5>
+                    <small id="offcanvasReqId" style="font-family: monospace; color: #64748b; font-size: 0.75rem;">ID: #LR-000</small>
+                </div>
+            </div>
+
+            <div id="offcanvasStatusBadgeContainer">
+                <!-- Status Badge injected dynamically -->
+            </div>
+        </div>
+
+        <!-- Employee Info Card -->
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 14px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div id="offcanvasEmployeeAvatarContainer" style="position: relative;">
+                    <!-- Avatar injected dynamically -->
+                </div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <span id="offcanvasEmployeeName" style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">Employee Name</span>
+                        <span id="offcanvasDepartmentBadge" style="font-size: 0.7rem; font-weight: 600; color: #818cf8; background: rgba(99, 102, 241, 0.15); padding: 0.15rem 0.5rem; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                            Engineering
+                        </span>
+                    </div>
+                    <small id="offcanvasEmployeeRole" style="color: #94a3b8; font-size: 0.75rem; display: flex; align-items: center; gap: 0.35rem; margin-top: 0.15rem;">
+                        <i class="fa-solid fa-briefcase" style="color: #64748b; font-size: 0.7rem;"></i> Employee Role
+                    </small>
+                </div>
+            </div>
+
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(51, 65, 85, 0.4); padding: 0.4rem 0.85rem; border-radius: 10px; display: flex; align-items: center; gap: 0.85rem; font-size: 0.75rem;">
+                <div style="padding-right: 0.75rem; border-right: 1px solid rgba(51, 65, 85, 0.6);">
+                    <span style="color: #64748b; display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">Duration</span>
+                    <span id="offcanvasDuration" style="color: #f59e0b; font-weight: 700;">0 Days</span>
+                </div>
+                <div>
+                    <span style="color: #64748b; display: block; font-size: 0.65rem; font-weight: 700; text-transform: uppercase;">Dates</span>
+                    <span id="offcanvasDateRange" style="color: #e2e8f0; font-weight: 600;">Start - End</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- SCROLLABLE BODY CONTENT -->
+    <!-- ------------------------------------------------------------- -->
+    <div style="padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.25rem;">
+
+        <!-- ========================================================= -->
+        <!-- SECTION 1: LEAVE CONTEXT & BALANCES -->
+        <!-- ========================================================= -->
+        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(30, 41, 59, 0.8); border-radius: 16px; padding: 1.15rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(30, 41, 59, 0.8); padding-bottom: 0.6rem;">
+                <h6 style="margin: 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #818cf8; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-file-lines" style="color: #818cf8;"></i>
+                    Leave Context & Balances
+                </h6>
+                {% if request.user.role == 'HR' %}
+                <span style="font-size: 0.7rem; font-weight: 600; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 0.15rem 0.5rem; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.25);">
+                    <i class="fa-solid fa-shield-check me-1"></i> HR Compliance Active
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Type & Reason Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.85rem;">
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 0.75rem 0.9rem; border-radius: 12px; border: 1px solid rgba(30, 41, 59, 0.8);">
+                    <span style="font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 0.25rem;">Leave Category</span>
+                    <div id="offcanvasLeaveType" style="font-size: 0.85rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 0.5rem;">
+                        <span id="offcanvasTypeColorDot" style="width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; display: inline-block;"></span>
+                        Sick Leave
+                    </div>
+                </div>
+
+                <div style="grid-column: span 2 / span 2; background: rgba(15, 23, 42, 0.6); padding: 0.75rem 0.9rem; border-radius: 12px; border: 1px solid rgba(30, 41, 59, 0.8);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: #94a3b8;">Reason / Note</span>
+                        <div id="offcanvasCertificateContainer">
+                            <!-- Medical Cert link injected dynamically if available -->
+                        </div>
+                    </div>
+                    <p id="offcanvasReason" style="font-size: 0.8rem; color: #cbd5e1; margin: 0; line-height: 1.5; font-style: italic;">
+                        "Reason description..."
+                    </p>
+                </div>
+            </div>
+
+            <!-- Balances Progress Bars Overview -->
+            <div>
+                <span style="font-size: 0.75rem; font-weight: 600; color: #94a3b8; display: block; margin-bottom: 0.6rem;">
+                    Employee Leave Balances Overview:
+                </span>
+                <div id="offcanvasBalancesContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.65rem;">
+                    <!-- Balance progress cards dynamically populated -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 2: WORK CONVERSION (TASK REASSIGNMENT) -->
+        <!-- ========================================================= -->
+        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(30, 41, 59, 0.8); border-radius: 16px; padding: 1.15rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(30, 41, 59, 0.8); padding-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                    <h6 style="margin: 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #c084fc; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-list-check" style="color: #c084fc;"></i>
+                        Work Conversion & Task Reassignment
+                    </h6>
+                    <small id="offcanvasTaskCountText" style="color: #94a3b8; font-size: 0.7rem;">Pending tasks during leave dates: <strong style="color: #fff;">0 Tasks</strong></small>
+                </div>
+
+                <button type="button" onclick="openReassignModalDemo()" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); padding: 0.35rem 0.75rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.3)'" onmouseout="this.style.background='rgba(168,85,247,0.15)'">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> ✨ Open Drag-and-Drop Reassignment Modal
+                </button>
+            </div>
+
+            <!-- Role View Indicator Banner -->
+            {% if request.user.role == 'HR' %}
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; padding: 0.6rem 0.85rem; font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-eye" style="color: #818cf8;"></i>
+                <span><strong style="color: #a5b4fc;">HR View Mode:</strong> Work reassignments are read-only for compliance checking. Admin configures active task transfers.</span>
+            </div>
+            {% elif request.user.role == 'ADMIN' %}
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 10px; padding: 0.6rem 0.85rem; font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-sliders" style="color: #c084fc;"></i>
+                <span><strong style="color: #e9d5ff;">Admin Operational View:</strong> Reassign scheduled tasks to available team members below prior to approving handover.</span>
+            </div>
+            {% else %}
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px; padding: 0.6rem 0.85rem; font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-user-check" style="color: #10b981;"></i>
+                <span><strong style="color: #6ee7b7;">Work Handover Summary:</strong> Details of team members assigned to cover your tasks during your approved leave.</span>
+            </div>
+            {% endif %}
+
+            <!-- Tasks List -->
+            <div id="offcanvasTasksContainer" style="display: flex; flex-direction: column; gap: 0.65rem;">
+                <!-- Tasks dynamically populated -->
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- SECTION 3: AUDIT TRAIL & REMARKS -->
+        <!-- ========================================================= -->
+        <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid rgba(30, 41, 59, 0.8); border-radius: 16px; padding: 1.15rem; display: flex; flex-direction: column; gap: 1rem;">
+            <h6 style="margin: 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid rgba(30, 41, 59, 0.8); padding-bottom: 0.6rem;">
+                <i class="fa-solid fa-clock-rotate-left" style="color: #38bdf8;"></i>
+                Audit Trail & Process Timeline
+            </h6>
+
+            <!-- Vertical Timeline -->
+            <div id="offcanvasTimelineContainer" style="position: relative; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                <!-- Timeline items dynamically generated -->
+            </div>
+
+            <!-- Remarks Form Input -->
+            <div style="margin-top: 0.5rem;">
+                <label for="offcanvasRemarksInput" style="font-size: 0.75rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+                    <i class="fa-solid fa-comment-dots" style="color: #818cf8;"></i>
+                    {% if request.user.role == 'ADMIN' %}Admin Approval Remarks & Handover Notes:{% else %}HR Verification & Compliance Notes:{% endif %}
+                </label>
+                <textarea id="offcanvasRemarksInput" rows="3" class="form-control glass-input" style="background: #020617; border: 1px solid rgba(51, 65, 85, 0.8); color: #f8fafc; font-size: 0.8rem; border-radius: 10px; padding: 0.6rem 0.85rem; resize: none;" placeholder="Enter administrative notes, handover guidelines, or reason for action..."></textarea>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- FOOTER ACTIONS -->
+    <!-- ------------------------------------------------------------- -->
+    <div style="padding: 1.15rem 1.5rem; background: rgba(15, 23, 42, 0.95); border-top: 1px solid rgba(30, 41, 59, 0.8); position: sticky; bottom: 0; z-index: 10; backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+        
+        <div style="font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 0.35rem;">
+            <i class="fa-solid fa-user-shield" style="color: #c084fc;"></i>
+            <span>Active Role: <strong style="color: #e2e8f0;">{{ request.user.role }} Manager</strong></span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            {% if request.user.role == 'ADMIN' %}
+                <button type="button" onclick="submitOffcanvasAction('reject')" style="background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(244,63,94,0.25)'" onmouseout="this.style.background='rgba(244,63,94,0.12)'">
+                    <i class="fa-solid fa-xmark me-1"></i> Reject
+                </button>
+
+                <button type="button" onclick="submitOffcanvasAction('request_info')" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.25)'" onmouseout="this.style.background='rgba(245,158,11,0.12)'">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Request Info
+                </button>
+
+                <button type="button" onclick="submitOffcanvasAction('approve')" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 0.5rem 1.25rem; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3); transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Approve & Apply Handover
+                </button>
+            {% elif request.user.role == 'HR' %}
+                <button type="button" onclick="submitOffcanvasAction('reject')" style="background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(244,63,94,0.25)'" onmouseout="this.style.background='rgba(244,63,94,0.12)'">
+                    <i class="fa-solid fa-flag me-1"></i> Flag Issue
+                </button>
+
+                <button type="button" onclick="submitOffcanvasAction('save_remarks')" style="background: rgba(30, 41, 59, 0.8); color: #cbd5e1; border: 1px solid rgba(51, 65, 85, 0.8); padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(51,65,85,0.8)'" onmouseout="this.style.background='rgba(30,41,59,0.8)'">
+                    <i class="fa-solid fa-comment me-1"></i> Add Remarks
+                </button>
+
+                <button type="button" onclick="submitOffcanvasAction('approve')" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.5rem 1.25rem; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                    <i class="fa-solid fa-user-check me-1"></i> Mark as Verified
+                </button>
+            {% else %}
+                <button type="button" onclick="closeDetailedLeaveOffcanvas()" style="background: rgba(30, 41, 59, 0.8); color: #cbd5e1; border: 1px solid rgba(51, 65, 85, 0.8); padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                    Close
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Action Form for Submission -->
+<form id="offcanvasActionForm" method="post" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" id="offcanvasFormRemarks" name="admin_remarks" value="">
+    <input type="hidden" name="remarks" value="">
+</form>
+
+<script>
+let currentOffcanvasData = null;
+
+function renderOffcanvasTaskItems(reassignments) {
+    const taskCount = reassignments ? reassignments.length : 0;
+    const taskCountHeader = document.getElementById('offcanvasTaskCountText');
+    if (taskCountHeader) {
+        taskCountHeader.innerHTML = `Pending tasks during leave dates: <strong style="color: #fff;">${taskCount} Task${taskCount === 1 ? '' : 's'}</strong>`;
+    }
+
+    const tasksContainer = document.getElementById('offcanvasTasksContainer');
+    if (!tasksContainer) return;
+    tasksContainer.innerHTML = '';
+
+    if (reassignments && reassignments.length > 0) {
+        reassignments.forEach((task, idx) => {
+            const taskRow = document.createElement('div');
+            taskRow.style.cssText = "background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 0.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;";
+            
+            const assigneeName = task.assignee || task.reassigned_to_name || 'Unassigned';
+            const taskTitle = task.title || task.task_title || 'General Handover';
+            const taskStatus = task.status_display || task.status || 'Pending';
+            const statusVal = (task.status || '').toUpperCase();
+
+            let statusBadgeClass = 'bg-warning bg-opacity-20 text-warning border-warning';
+            if (statusVal === 'ACCEPTED') {
+                statusBadgeClass = 'bg-info bg-opacity-20 text-info border-info';
+            } else if (statusVal === 'COMPLETED') {
+                statusBadgeClass = 'bg-success bg-opacity-20 text-success border-success';
+            }
+
+            taskRow.innerHTML = `
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #c084fc;">${idx + 1}.</span>
+                        <span style="font-size: 0.85rem; font-weight: 600; color: #f8fafc;">${taskTitle}</span>
+                        <span class="badge ${statusBadgeClass} border border-opacity-40" style="font-size: 0.65rem;">${taskStatus}</span>
+                    </div>
+                    ${task.notes ? `<div style="font-size: 0.72rem; color: #94a3b8; margin-top: 0.2rem;"><i class="fa-solid fa-note-sticky me-1" style="color: #64748b;"></i>${task.notes}</div>` : ''}
+                </div>
+                <div style="min-width: 180px;">
+                    <div style="font-size: 0.75rem; background: rgba(30, 41, 59, 0.8); padding: 0.4rem 0.75rem; border-radius: 8px; border: 1px solid rgba(51, 65, 85, 0.6); color: #e2e8f0; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-user-check" style="color: #818cf8; font-size: 0.7rem;"></i>
+                        <div>
+                            <span style="font-size: 0.62rem; color: #64748b; display: block; text-transform: uppercase; font-weight: 700; line-height: 1;">Assigned To</span>
+                            <strong style="color: #ffffff;">${assigneeName}</strong>
+                        </div>
+                    </div>
+                </div>
+            `;
+            tasksContainer.appendChild(taskRow);
+        });
+    } else {
+        tasksContainer.innerHTML = `
+            <div style="background: rgba(15, 23, 42, 0.5); border: 1px dashed rgba(51, 65, 85, 0.6); border-radius: 12px; padding: 1.25rem; text-align: center; color: #64748b; font-size: 0.8rem;">
+                <i class="fa-solid fa-clipboard-check mb-2" style="font-size: 1.5rem; color: #475569; display: block;"></i>
+                No active task reassignments logged for this leave request.
+            </div>
+        `;
+    }
+}
+
+function openOffcanvasFromElement(btn) {
+    if (!btn) return;
+    const d = btn.dataset;
+    let balances = [];
+    try {
+        if (d.balances) {
+            balances = JSON.parse(d.balances);
+        }
+    } catch (e) {
+        console.warn("Could not parse balances JSON", e);
+    }
+    let reassignments = [];
+    try {
+        if (d.reassignments) {
+            reassignments = JSON.parse(d.reassignments);
+        }
+    } catch (e) {
+        console.warn("Could not parse reassignments JSON", e);
+    }
+
+    openDetailedLeaveOffcanvas({
+        id: d.id || '0',
+        employee_name: d.employeeName || 'Employee',
+        department: d.department || 'General',
+        designation: d.designation || 'Employee',
+        avatar: d.avatar || '',
+        leave_type: d.leaveType || 'Leave',
+        leave_color: d.leaveColor || '#3b82f6',
+        start_date: d.startDate || '',
+        end_date: d.endDate || '',
+        duration: d.duration || '1',
+        reason: d.reason || '',
+        status: d.status || 'HR_PENDING',
+        status_display: d.statusDisplay || 'Pending',
+        medical_certificate: d.medicalCertificate || '',
+        admin_remarks: d.adminRemarks || '',
+        rejection_reason: d.rejectionReason || '',
+        hr_approved_by: d.hrApprovedBy || '',
+        hr_approved_at: d.hrApprovedAt || '',
+        admin_approved_by: d.adminApprovedBy || '',
+        admin_approved_at: d.adminApprovedAt || '',
+        applied_on: d.appliedOn || '',
+        balances: balances,
+        reassignments: reassignments
+    });
+}
+
+function openDetailedLeaveOffcanvas(data) {
+    if (!data) return;
+    currentOffcanvasData = data;
+
+    
+    // Header details
+    document.getElementById('offcanvasReqId').textContent = 'ID: #LR-' + data.id;
+    document.getElementById('offcanvasEmployeeName').textContent = data.employee_name;
+    document.getElementById('offcanvasDepartmentBadge').textContent = data.department || 'General';
+    document.getElementById('offcanvasEmployeeRole').innerHTML = '<i class="fa-solid fa-briefcase me-1" style="color:#64748b;"></i> ' + (data.designation || 'Employee');
+    document.getElementById('offcanvasDuration').textContent = data.duration + ' Day' + (parseInt(data.duration) > 1 ? 's' : '');
+    document.getElementById('offcanvasDateRange').textContent = data.start_date + ' to ' + data.end_date;
+
+    // Avatar
+    const avatarContainer = document.getElementById('offcanvasEmployeeAvatarContainer');
+    if (data.avatar) {
+        avatarContainer.innerHTML = `<img src="${data.avatar}" alt="Profile" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(99, 102, 241, 0.4);">`;
+    } else {
+        const initial = (data.employee_name || 'U').charAt(0).toUpperCase();
+        avatarContainer.innerHTML = `<div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #6366F1, #4F46E5); color: #fff; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(99, 102, 241, 0.4);">${initial}</div>`;
+    }
+
+    // Status Badge
+    const statusContainer = document.getElementById('offcanvasStatusBadgeContainer');
+    let statusStyle = 'background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);';
+    let statusIcon = 'fa-clock';
+
+    if (data.status === 'APPROVED') {
+        statusStyle = 'background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);';
+        statusIcon = 'fa-circle-check';
+    } else if (data.status === 'REJECTED') {
+        statusStyle = 'background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);';
+        statusIcon = 'fa-circle-xmark';
+    } else if (data.status === 'ADMIN_PENDING') {
+        statusStyle = 'background: rgba(2, 132, 199, 0.15); color: #38bdf8; border: 1px solid rgba(2, 132, 199, 0.3);';
+        statusIcon = 'fa-paper-plane';
+    }
+
+    statusContainer.innerHTML = `<span style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; ${statusStyle}"><i class="fa-solid ${statusIcon}"></i> ${data.status_display}</span>`;
+
+    // Leave Context
+    document.getElementById('offcanvasLeaveType').innerHTML = `<span style="width: 10px; height: 10px; border-radius: 50%; background: ${data.leave_color || '#3b82f6'}; display: inline-block;"></span> ${data.leave_type}`;
+    document.getElementById('offcanvasReason').textContent = `"${data.reason}"`;
+
+    // Certificate
+    const certContainer = document.getElementById('offcanvasCertificateContainer');
+    if (data.medical_certificate) {
+        certContainer.innerHTML = `<a href="${data.medical_certificate}" target="_blank" style="font-size: 0.7rem; color: #38bdf8; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-paperclip"></i> View Medical Note</a>`;
+    } else {
+        certContainer.innerHTML = `<span style="font-size: 0.7rem; color: #64748b;">No document attached</span>`;
+    }
+
+    // Balances
+    const balancesContainer = document.getElementById('offcanvasBalancesContainer');
+    balancesContainer.innerHTML = '';
+
+    if (data.balances && data.balances.length > 0) {
+        data.balances.forEach(bal => {
+            const pct = bal.allocated > 0 ? Math.round((bal.remaining / bal.allocated) * 100) : 0;
+            const card = document.createElement('div');
+            card.style.cssText = "background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(30, 41, 59, 0.8); padding: 0.6rem; border-radius: 10px; display: flex; flex-direction: column; justify-content: space-between;";
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <span style="font-size: 0.7rem; color: #e2e8f0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${bal.type}</span>
+                    <span style="font-size: 0.65rem; font-weight: 700; color: #f8fafc; background: #1e293b; padding: 0.1rem 0.4rem; border-radius: 4px;">${bal.remaining}/${bal.allocated}d</span>
+                </div>
+                <div style="height: 5px; width: 100%; background: rgba(30, 41, 59, 0.8); border-radius: 3px; overflow: hidden; margin-bottom: 0.2rem;">
+                    <div style="height: 100%; width: ${pct}%; background: ${bal.color || '#4f46e5'}; border-radius: 3px; transition: width 0.4s ease;"></div>
+                </div>
+                <span style="font-size: 0.6rem; color: #64748b;">${pct}% Available</span>
+            `;
+            balancesContainer.appendChild(card);
+        });
+    } else {
+        balancesContainer.innerHTML = '<span style="font-size: 0.75rem; color: #64748b;">No balance records loaded</span>';
+    }
+
+    // Task Reassignments Dynamic Section
+    renderOffcanvasTaskItems(data.reassignments);
+
+    // Asynchronous API Fetch to ensure real-time REST endpoint sync
+    if (data.id && data.id !== '0') {
+        fetch('/api/v1/leave-requests/' + data.id + '/')
+            .then(res => res.ok ? res.json() : null)
+            .then(apiData => {
+                if (apiData && apiData.task_reassignments && apiData.task_reassignments.length > 0) {
+                    renderOffcanvasTaskItems(apiData.task_reassignments);
+                }
+            })
+            .catch(err => console.log('API fetch fallback catch:', err));
+    }
+
+    // Timeline Audit Trail
+    const timelineContainer = document.getElementById('offcanvasTimelineContainer');
+    timelineContainer.innerHTML = '';
+
+    const timelineEvents = [
+        {
+            title: "Leave Request Submitted",
+            time: data.applied_on || "Recently",
+            notes: `Requested ${data.duration} days of ${data.leave_type}.`,
+            actor: data.employee_name,
+            icon: "fa-paper-plane",
+            color: "#38bdf8"
+        }
+    ];
+
+    if (data.hr_approved_by) {
+        timelineEvents.unshift({
+            title: "HR Verified & Reviewed",
+            time: data.hr_approved_at || "HR Approved",
+            notes: "Leave balance is verified & forwarded to Admin.",
+            actor: data.hr_approved_by + " (HR Manager)",
+            icon: "fa-shield-check",
+            color: "#10b981"
+        });
+    }
+
+    if (data.admin_approved_by) {
+        timelineEvents.unshift({
+            title: "Admin Approval Applied",
+            time: data.admin_approved_at || "Approved",
+            notes: "Leave request approved & work handover applied.",
+            actor: data.admin_approved_by + " (Admin)",
+            icon: "fa-circle-check",
+            color: "#818cf8"
+        });
+    } else if (data.status === 'REJECTED') {
+        timelineEvents.unshift({
+            title: "Leave Request Rejected",
+            time: "Processed",
+            notes: data.rejection_reason || data.admin_remarks || "Rejected during review.",
+            actor: "Reviewing Manager",
+            icon: "fa-circle-xmark",
+            color: "#f43f5e"
+        });
+    }
+
+    timelineEvents.forEach(evt => {
+        const item = document.createElement('div');
+        item.style.cssText = "position: relative;";
+        item.innerHTML = `
+            <div style="position: absolute; left: -1.85rem; top: 0.2rem; width: 22px; height: 22px; border-radius: 50%; background: #0f172a; border: 2px solid ${evt.color}; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: ${evt.color};">
+                <i class="fa-solid ${evt.icon}"></i>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(30, 41, 59, 0.8); border-radius: 10px; padding: 0.65rem 0.85rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #f8fafc;">${evt.title}</span>
+                    <span style="font-size: 0.65rem; color: #64748b; font-family: monospace;">${evt.time}</span>
+                </div>
+                <p style="font-size: 0.72rem; color: #94a3b8; margin: 0; margin-bottom: 0.25rem;">${evt.notes}</p>
+                <span style="font-size: 0.68rem; color: #cbd5e1; display: inline-flex; align-items: center; gap: 0.25rem;">
+                    <i class="fa-solid fa-user-circle" style="color: #64748b;"></i> ${evt.actor}
+                </span>
+            </div>
+        `;
+        timelineContainer.appendChild(item);
+    });
+
+    // Preset Remarks Input
+    document.getElementById('offcanvasRemarksInput').value = data.admin_remarks || '';
+
+    // Show Drawer
+    document.getElementById('detailedLeaveOffcanvasBackdrop').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('detailedLeaveOffcanvasBackdrop').style.opacity = '1';
+        document.getElementById('detailedLeaveOffcanvasDrawer').style.transform = 'translateX(0)';
+    }, 10);
+}
+
+function closeDetailedLeaveOffcanvas() {
+    document.getElementById('detailedLeaveOffcanvasDrawer').style.transform = 'translateX(100%)';
+    document.getElementById('detailedLeaveOffcanvasBackdrop').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('detailedLeaveOffcanvasBackdrop').style.display = 'none';
+    }, 300);
+}
+
+function submitOffcanvasAction(action) {
+    if (!currentOffcanvasData) return;
+    
+    const remarks = document.getElementById('offcanvasRemarksInput').value;
+    const form = document.getElementById('offcanvasActionForm');
+    document.getElementById('offcanvasFormRemarks').value = remarks;
+    form.querySelector('input[name="remarks"]').value = remarks;
+    
+    const role = "{{ request.user.role }}";
+    if (role === 'ADMIN') {
+        form.action = `/admin/leave-request/${currentOffcanvasData.id}/${action}/`;
+    } else {
+        form.action = `/hr/leave-request/${currentOffcanvasData.id}/${action}/`;
+    }
+    
+    form.submit();
+}
+</script>

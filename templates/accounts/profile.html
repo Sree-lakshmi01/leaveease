@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - LeaveEase{% endblock %}
+{% block page_title %}Profile Settings{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <!-- Left Column - Profile Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card p-4 text-center">
+            <div class="position-relative d-inline-block mb-3">
+                {% if request.user.profile_pic %}
+                    <img src="{{ request.user.profile_pic.url }}" alt="Profile Picture" class="rounded-circle border border-light border-opacity-10" style="width: 120px; height: 120px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white font-heading fw-bold" style="width: 120px; height: 120px; background: var(--primary-gradient); font-size: 3rem; margin: 0 auto;">
+                        {{ request.user.username|slice:":1"|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <h4 class="text-white mb-1">{{ request.user.get_full_name|default:request.user.username }}</h4>
+            <p class="text-secondary mb-3">{{ request.user.get_role_display }}</p>
+            
+            <hr class="border-light border-opacity-10 my-3">
+            
+            <div class="text-start">
+                <div class="mb-2">
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Username</small>
+                    <span class="text-white" style="font-size: 0.9rem;">{{ request.user.username }}</span>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Email Address</small>
+                    <span class="text-white" style="font-size: 0.9rem;">{{ request.user.email }}</span>
+                </div>
+                {% if request.user.department %}
+                <div class="mb-2">
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Department</small>
+                    <span class="text-white" style="font-size: 0.9rem;">{{ request.user.department }}</span>
+                </div>
+                {% endif %}
+                {% if request.user.designation %}
+                <div class="mb-2">
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Designation</small>
+                    <span class="text-white" style="font-size: 0.9rem;">{{ request.user.designation }}</span>
+                </div>
+                {% endif %}
+                {% if request.user.phone %}
+                <div class="mb-2">
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Phone Number</small>
+                    <span class="text-white" style="font-size: 0.9rem;">{{ request.user.phone }}</span>
+                </div>
+                {% endif %}
+                {% if request.user.date_of_joining %}
+                <div class="mb-2">
+                    <small class="text-muted d-block" style="font-size: 0.75rem;">Date of Joining</small>
+                    <span class="text-white" style="font-size: 0.9rem;">{{ request.user.date_of_joining }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column - Settings Form -->
+    <div class="col-lg-8">
+        <div class="glass-card p-4 mb-4">
+            <ul class="nav nav-tabs border-light border-opacity-10 mb-4" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active text-white bg-transparent border-0 border-bottom border-2 fw-semibold px-3 pb-2" id="edit-profile-tab" data-bs-toggle="tab" data-bs-target="#edit-profile" type="button" role="tab" aria-controls="edit-profile" aria-selected="true" style="border-color: var(--accent-primary) !important;">
+                        <i class="fa-solid fa-user-pen me-2"></i>Edit Profile
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-secondary bg-transparent border-0 fw-semibold px-3 pb-2" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false">
+                        <i class="fa-solid fa-lock me-2"></i>Change Password
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="profileTabsContent">
+                <!-- Edit Profile Tab -->
+                <div class="tab-pane fade show active" id="edit-profile" role="tabpanel" aria-labelledby="edit-profile-tab">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="update_profile" value="1">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary">First Name</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary">Last Name</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary">Email Address</label>
+                                {{ form.email }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary">Phone Number</label>
+                                {{ form.phone }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary">Department</label>
+                                {{ form.department }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary">Designation</label>
+                                {{ form.designation }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary">Gender</label>
+                                {{ form.gender }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-secondary">Profile Picture</label>
+                                {{ form.profile_pic }}
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-gradient-primary mt-3">
+                            <i class="fa-solid fa-circle-check me-2"></i>Save Changes
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Change Password Tab -->
+                <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="change_password" value="1">
+                        
+                        {% for field in password_form %}
+                            <div class="mb-3">
+                                <label class="form-label text-secondary">{{ field.label }}</label>
+                                <input type="password" name="{{ field.html_name }}" class="form-control glass-input" required placeholder="Enter {{ field.label|lower }}">
+                                {% if field.errors %}
+                                    <small class="text-danger d-block mt-1">{{ field.errors.0 }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-gradient-primary mt-3">
+                            <i class="fa-solid fa-key me-2"></i>Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Leave Balances Summary (Employee Only) -->
+        {% if balances %}
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-scale-balanced me-2 text-primary"></i>My Leave Balances</h5>
+            <div class="row g-4">
+                {% for bal in balances %}
+                <div class="col-md-4">
+                    <div class="p-3 rounded-4" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold text-white">{{ bal.leave_type.name }}</span>
+                            <span class="badge rounded-pill" style="background: {{ bal.leave_type.color_code }}20; color: {{ bal.leave_type.color_code }}; border: 1px solid {{ bal.leave_type.color_code }}40;">
+                                Max: {{ bal.allocated }}
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <span class="fs-2 fw-bold text-white">{{ bal.remaining }}</span>
+                            <small class="text-secondary">Days Left</small>
+                        </div>
+                        <div class="progress mt-2" style="height: 6px; background: rgba(255,255,255,0.05);">
+                            <div class="progress-bar" style="background-color: {{ bal.leave_type.color_code }}; width: {% widthratio bal.remaining bal.allocated 100 %}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Adjust active tab border colors dynamically
+    const triggerTabList = [].slice.call(document.querySelectorAll('#profileTabs button'))
+    triggerTabList.forEach(function (triggerEl) {
+        triggerEl.addEventListener('click', function (event) {
+            triggerTabList.forEach(btn => {
+                btn.style.borderColor = 'transparent';
+                btn.classList.add('text-secondary');
+                btn.classList.remove('text-white');
+            });
+            event.target.style.borderColor = 'var(--accent-primary)';
+            event.target.classList.remove('text-secondary');
+            event.target.classList.add('text-white');
+        })
+    })
+</script>
+{% endblock %}

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeaveEase Admin Dashboard - Premium Redesign</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151F32',
+                            900: '#0F172A',
+                            950: '#020617',
+                        },
+                        indigo: {
+                            400: '#818CF8',
+                            500: '#6366F1',
+                            600: '#4F46E5',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0F172A; color: #F8FAFC; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        }
+        .glow-accent { position: relative; }
+        .glow-accent::before {
+            content: ''; position: absolute; top: -20px; left: -20px; right: -20px; bottom: -20px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            border-radius: 50%; z-index: -1; pointer-events: none;
+        }
+        .table-row-hover:hover { background-color: rgba(255, 255, 255, 0.03); }
+    </style>
+</head>
+<body class="min-h-screen overflow-x-hidden flex">
+
+    <!-- Ambient Background Glow -->
+    <div class="fixed top-[-150px] left-1/2 transform -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none z-0"></div>
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel border-r border-slate-800 fixed h-full z-20 flex flex-col transition-all duration-300">
+        <div class="p-6 border-b border-white/5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i data-lucide="calendar-check" class="text-white w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg tracking-tight text-white">LeaveEase</h1>
+                <p class="text-xs text-slate-400 font-medium">Leave Management</p>
+            </div>
+        </div>
+        
+        <div class="p-4 flex-1 overflow-y-auto">
+            <div class="mb-6">
+                <p class="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-2 px-3">Management</p>
+                <nav class="space-y-1">
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-500/10 text-indigo-400 font-medium transition-all duration-200 border-l-2 border-indigo-500">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-all duration-200">
+                        <i data-lucide="inbox" class="w-4 h-4 text-slate-400"></i>
+                        Leave Requests
+                        <span class="ml-auto bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">3</span>
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-all duration-200">
+                        <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+                        Employees
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-all duration-200">
+                        <i data-lucide="sun" class="w-4 h-4 text-slate-400"></i>
+                        Holidays
+                    </a>
+                </nav>
+            </div>
+            
+            <div>
+                <p class="text-[10px] font-bold text-slate-500 tracking-wider uppercase mb-2 px-3">General</p>
+                <nav class="space-y-1">
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-all duration-200">
+                        <i data-lucide="calendar-days" class="w-4 h-4 text-slate-400"></i>
+                        Calendar
+                    </a>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 font-medium transition-all duration-200">
+                        <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
+                        Settings
+                    </a>
+                </nav>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-white/5">
+            <button class="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-rose-400 hover:bg-rose-500/10 font-medium transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                Sign out
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 flex-1 min-h-screen relative z-10 p-8 pb-20">
+        
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-8">
+            <div>
+                <h2 class="text-2xl font-bold text-white tracking-tight">Admin Dashboard</h2>
+                <p class="text-sm text-slate-400 mt-1">Here's what's happening with your team today.</p>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Search..." class="bg-slate-800/50 border border-slate-700 text-sm text-white rounded-lg pl-9 pr-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-64 transition-all duration-200 placeholder-slate-500">
+                </div>
+                
+                <button class="relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-slate-900"></span>
+                </button>
+                
+                <div class="flex items-center gap-3 pl-4 border-l border-white/10 cursor-pointer hover:opacity-80 transition-opacity">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-semibold text-white">Alex Morgan</p>
+                        <p class="text-xs text-slate-400">Administrator</p>
+                    </div>
+                    <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Profile" class="w-9 h-9 rounded-full border border-slate-700 object-cover">
+                </div>
+            </div>
+        </header>
+
+        <!-- Stat Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Card 1 -->
+            <div class="glass-panel p-5 rounded-2xl glow-accent relative overflow-hidden group hover:border-indigo-500/30">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-sm font-medium text-slate-400">Total Employees</p>
+                        <h3 class="text-3xl font-bold text-white mt-1">142</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-xs">
+                    <span class="flex items-center text-emerald-400 font-medium bg-emerald-500/10 px-1.5 py-0.5 rounded mr-2">
+                        <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i> +4.5%
+                    </span>
+                    <span class="text-slate-500">vs last month</span>
+                </div>
+            </div>
+            
+            <!-- Card 2 -->
+            <div class="glass-panel p-5 rounded-2xl glow-accent relative overflow-hidden group hover:border-amber-500/30">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-sm font-medium text-slate-400">Pending Approvals</p>
+                        <h3 class="text-3xl font-bold text-white mt-1">12</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="w-full h-8 mt-2 flex items-end gap-1">
+                    <div class="w-full bg-slate-800 rounded-t h-[40%]"></div>
+                    <div class="w-full bg-slate-800 rounded-t h-[60%]"></div>
+                    <div class="w-full bg-slate-800 rounded-t h-[30%]"></div>
+                    <div class="w-full bg-slate-800 rounded-t h-[80%]"></div>
+                    <div class="w-full bg-amber-500 rounded-t h-[100%]"></div>
+                    <div class="w-full bg-slate-800 rounded-t h-[50%]"></div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden hover:border-emerald-500/30">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-sm font-medium text-slate-400">Approved Leaves</p>
+                        <h3 class="text-3xl font-bold text-white mt-1">324</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-xs">
+                    <span class="flex items-center text-emerald-400 font-medium bg-emerald-500/10 px-1.5 py-0.5 rounded mr-2">
+                        <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i> +12.3%
+                    </span>
+                    <span class="text-slate-500">this year</span>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden hover:border-indigo-500/30">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-sm font-medium text-slate-400">On Leave Today</p>
+                        <h3 class="text-3xl font-bold text-white mt-1">8</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400">
+                        <i data-lucide="calendar-off" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="flex -space-x-2 overflow-hidden mt-3">
+                    <img class="inline-block h-6 w-6 rounded-full ring-2 ring-slate-900" src="https://i.pravatar.cc/150?u=1" alt=""/>
+                    <img class="inline-block h-6 w-6 rounded-full ring-2 ring-slate-900" src="https://i.pravatar.cc/150?u=2" alt=""/>
+                    <img class="inline-block h-6 w-6 rounded-full ring-2 ring-slate-900" src="https://i.pravatar.cc/150?u=3" alt=""/>
+                    <div class="inline-flex h-6 w-6 rounded-full ring-2 ring-slate-900 bg-slate-800 items-center justify-center text-[10px] font-bold">+5</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table Section -->
+        <div class="glass-panel rounded-2xl overflow-hidden">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white">Pending Leave Requests</h3>
+                <button class="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">View All</button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 border-b border-white/5">
+                            <th class="py-3 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Employee</th>
+                            <th class="py-3 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Leave Type</th>
+                            <th class="py-3 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Duration</th>
+                            <th class="py-3 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
+                            <th class="py-3 px-6 text-xs font-semibold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        
+                        <!-- Row 1 -->
+                        <tr class="table-row-hover transition-colors duration-200">
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <img src="https://i.pravatar.cc/150?u=12" alt="Avatar" class="w-9 h-9 rounded-full object-cover">
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">Sarah Jenkins</p>
+                                        <p class="text-xs text-slate-500">Frontend Engineer</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="text-sm text-slate-300">Annual Leave</span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <p class="text-sm text-white font-medium">Oct 12 - Oct 15</p>
+                                <p class="text-xs text-slate-500">4 days</p>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                                    Pending
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white text-xs font-semibold rounded-full border border-emerald-500/20 transition-all duration-200 hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                                        Approve
+                                    </button>
+                                    <button class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-semibold rounded-full border border-rose-500/20 transition-all duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.5)]">
+                                        Reject
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Row 2 -->
+                        <tr class="table-row-hover transition-colors duration-200">
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">
+                                        MR
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-white">Marcus Rowe</p>
+                                        <p class="text-xs text-slate-500">Product Manager</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="text-sm text-slate-300">Sick Leave</span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <p class="text-sm text-white font-medium">Oct 09 (Today)</p>
+                                <p class="text-xs text-slate-500">1 day</p>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="inline-flex items-center gap-1.5 bg-amber-500/10 text-amber-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-500/20">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                                    Pending
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white text-xs font-semibold rounded-full border border-emerald-500/20 transition-all duration-200 hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                                        Approve
+                                    </button>
+                                    <button class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white text-xs font-semibold rounded-full border border-rose-500/20 transition-all duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.5)]">
+                                        Reject
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

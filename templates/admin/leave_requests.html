@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}All Leave Requests - LeaveEase{% endblock %}
+{% block page_title %}Leave Applications Manager{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <h5 class="text-white m-0"><i class="fa-solid fa-envelope-open-text me-2 text-primary"></i>All Leave Requests</h5>
+                    <a href="{% url 'admin_run_ai_agent' %}" class="btn btn-sm btn-gradient-primary rounded-pill px-3 py-1 font-weight-600 text-decoration-none shadow-sm">
+                        <i class="fa-solid fa-robot me-1"></i> 🤖 Run AI Approval Agent
+                    </a>
+                    <a href="{% url 'detailed_offcanvas_demo' %}" target="_blank" class="btn btn-sm btn-outline-secondary glass-input rounded-pill px-3 py-1 text-white font-weight-600 text-decoration-none me-2">
+                        <i class="fa-solid fa-sidebar me-1"></i> Offcanvas View
+                    </a>
+                </div>
+                
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="?status=ALL" class="btn btn-sm {% if status_filter == 'ALL' %}btn-gradient-primary{% else %}btn-outline-secondary glass-input{% endif %}">All</a>
+                    <a href="?status=PENDING" class="btn btn-sm {% if status_filter == 'PENDING' %}btn-gradient-primary{% else %}btn-outline-secondary glass-input{% endif %}">Pending</a>
+                    <a href="?status=APPROVED" class="btn btn-sm {% if status_filter == 'APPROVED' %}btn-gradient-primary{% else %}btn-outline-secondary glass-input{% endif %}">Approved</a>
+                    <a href="?status=REJECTED" class="btn btn-sm {% if status_filter == 'REJECTED' %}btn-gradient-primary{% else %}btn-outline-secondary glass-input{% endif %}">Rejected</a>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Admin Remarks</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in leave_requests %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if req.user.profile_pic %}
+                                        <img src="{{ req.user.profile_pic.url }}" alt="Profile" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem; background: linear-gradient(135deg, #6366F1, #4F46E5);">
+                                            {{ req.user.username|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <span class="text-white fw-semibold d-block" style="font-size: 0.85rem;">{{ req.user.get_full_name|default:req.user.username }}</span>
+                                        <small class="text-muted" style="font-size: 0.75rem;">{{ req.user.department }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="d-inline-block rounded-circle" style="width: 8px; height: 8px; background-color: {{ req.leave_type.color_code }};"></span>
+                                    <span>{{ req.leave_type.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-white d-block" style="font-size: 0.8rem;">{{ req.start_date }}</small>
+                                <small class="text-secondary" style="font-size: 0.7rem;">to {{ req.end_date }}</small>
+                            </td>
+                            <td class="text-white fw-bold">{{ req.duration }}</td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 140px;" title="{{ req.reason }}">{{ req.reason }}</span>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill px-2.5 py-1" style="font-size: 0.75rem;
+                                    {% if req.status == 'HR_PENDING' %}background:rgba(245,158,11,0.15); color:#F59E0B; border:1px solid rgba(245,158,11,0.3);
+                                    {% elif req.status == 'ADMIN_PENDING' %}background:rgba(2,132,199,0.15); color:#0284C7; border:1px solid rgba(2,132,199,0.3);
+                                    {% elif req.status == 'APPROVED' %}background:rgba(16,185,129,0.15); color:#10B981; border:1px solid rgba(16,185,129,0.3);
+                                    {% else %}background:rgba(239,68,68,0.15); color:#EF4444; border:1px solid rgba(239,68,68,0.3);{% endif %}">
+                                    {{ req.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-secondary" style="font-size: 0.85rem;">
+                                    {% if req.rejection_reason %}
+                                        Rejection: {{ req.rejection_reason }}
+                                    {% else %}
+                                        {{ req.admin_remarks|default:"--" }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm me-1 px-2.5 py-1" style="font-size: 0.75rem; border-radius: 20px; background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.3)';" onmouseout="this.style.background='rgba(168,85,247,0.15)';" onclick="openOffcanvasFromElement(this)"
+                                    data-id="{{ req.pk }}"
+                                    data-employee-name="{{ req.user.get_full_name|default:req.user.username }}"
+                                    data-department="{{ req.user.department|default:'Engineering' }}"
+                                    data-designation="{{ req.user.designation|default:'Senior Employee' }}"
+                                    data-avatar="{% if req.user.profile_pic %}{{ req.user.profile_pic.url }}{% endif %}"
+                                    data-leave-type="{{ req.leave_type.name }}"
+                                    data-leave-color="{{ req.leave_type.color_code }}"
+                                    data-start-date="{{ req.start_date }}"
+                                    data-end-date="{{ req.end_date }}"
+                                    data-duration="{{ req.duration }}"
+                                    data-reason="{{ req.reason }}"
+                                    data-status="{{ req.status }}"
+                                    data-status-display="{{ req.get_status_display }}"
+                                    data-medical-certificate="{% if req.medical_certificate %}{{ req.medical_certificate.url }}{% endif %}"
+                                    data-admin-remarks="{{ req.admin_remarks|default:'' }}"
+                                    data-rejection-reason="{{ req.rejection_reason|default:'' }}"
+                                    data-hr-approved-by="{% if req.hr_approved_by %}{{ req.hr_approved_by.get_full_name|default:req.hr_approved_by.username }}{% endif %}"
+                                    data-hr-approved-at="{% if req.hr_approved_at %}{{ req.hr_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-admin-approved-by="{% if req.admin_approved_by %}{{ req.admin_approved_by.get_full_name|default:req.admin_approved_by.username }}{% endif %}"
+                                    data-admin-approved-at="{% if req.admin_approved_at %}{{ req.admin_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-applied-on="{% if req.applied_on %}{{ req.applied_on|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-balances="{{ req.user_balances_json|escape }}"
+                                    data-reassignments="{{ req.task_reassignments_json|escape }}"
+                                >
+                                    <i class="fa-solid fa-sidebar me-1"></i> ✨ View Details
+                                </button>
+
+                                {% if req.status == 'ADMIN_PENDING' or req.status == 'HR_PENDING' %}
+                                <button type="button" class="btn btn-sm me-1 px-3" style="font-size: 0.75rem; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); transition: all 0.2s;" onmouseover="this.style.background='#10B981';this.style.color='#fff';this.style.boxShadow='0 0 15px rgba(16,185,129,0.4)'" onmouseout="this.style.background='rgba(16,185,129,0.1)';this.style.color='#10B981';this.style.boxShadow='none'" onclick="openActionModal({{ req.pk }}, 'approve', '{{ req.user.username }}')">
+                                    <i class="fa-solid fa-check me-1"></i>Approve
+                                </button>
+                                <button type="button" class="btn btn-sm px-3" style="font-size: 0.75rem; border-radius: 20px; background: rgba(244, 63, 94, 0.1); color: #F43F5E; border: 1px solid rgba(244, 63, 94, 0.2); transition: all 0.2s;" onmouseover="this.style.background='#F43F5E';this.style.color='#fff';this.style.boxShadow='0 0 15px rgba(244,63,94,0.4)'" onmouseout="this.style.background='rgba(244,63,94,0.1)';this.style.color='#F43F5E';this.style.boxShadow='none'" onclick="openActionModal({{ req.pk }}, 'reject', '{{ req.user.username }}')">
+                                    <i class="fa-solid fa-xmark me-1"></i>Reject
+                                </button>
+                                {% elif req.medical_certificate %}
+                                <a href="{{ req.medical_certificate.url }}" target="_blank" class="btn btn-sm btn-outline-info" style="font-size: 0.75rem; border-radius: 6px; padding: 0.25rem 0.5rem;">
+                                    <i class="fa-solid fa-file-pdf"></i> Certificate
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div style="opacity: 0.6;">
+                                    <i class="fa-solid fa-folder-open" style="font-size: 2.5rem; color: var(--text-muted);"></i>
+                                    <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem; font-weight: 500;">No applications found</p>
+                                    <p class="text-muted" style="font-size: 0.8rem;">Leave requests matching your filter will appear here.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'includes/detailed_leave_offcanvas.html' %}
+
+
+<!-- Approve/Reject Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border border-light border-opacity-10" style="background: var(--bg-secondary); backdrop-filter: blur(12px);">
+            <div class="modal-header border-bottom border-light border-opacity-10">
+                <h5 class="modal-title text-white" id="actionModalLabel">Process Leave Request</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="actionForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-white" id="modalText"></p>
+                    <div class="mb-3">
+                        <label for="admin_remarks" class="form-label text-secondary">Admin Remarks</label>
+                        <textarea class="form-control glass-input" id="admin_remarks" name="admin_remarks" rows="3" placeholder="Add approval remarks or reason for rejection..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-light border-opacity-10">
+                    <button type="button" class="btn btn-outline-secondary glass-input" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" id="submitBtn" class="btn">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let actionModalInstance;
+    document.addEventListener("DOMContentLoaded", function() {
+        actionModalInstance = new bootstrap.Modal(document.getElementById('actionModal'));
+    });
+
+    function openActionModal(reqId, action, username) {
+        const form = document.getElementById('actionForm');
+        const text = document.getElementById('modalText');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        form.action = `/admin/leave-request/${reqId}/${action}/`;
+        
+        if (action === 'approve') {
+            text.textContent = `Are you sure you want to approve the leave request from ${username}?`;
+            submitBtn.textContent = 'Approve Leave';
+            submitBtn.className = 'btn btn-gradient-primary';
+        } else {
+            text.textContent = `Are you sure you want to reject the leave request from ${username}?`;
+            submitBtn.textContent = 'Reject Leave';
+            submitBtn.className = 'btn btn-gradient-danger';
+        }
+        
+        document.getElementById('admin_remarks').value = '';
+        actionModalInstance.show();
+    }
+</script>
+{% endblock %}

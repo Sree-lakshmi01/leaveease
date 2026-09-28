@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - LeaveEase{% endblock %}
+{% block page_title %}Administrator Dashboard{% endblock %}
+
+{% block content %}
+<!-- Metric Cards -->
+<div class="row g-4 mb-4 animate-fade-in">
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card p-4 metric-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="text-muted d-block" style="font-size: 0.8rem; font-weight: 500;">Total Employees</span>
+                    <h3 class="metric-value" style="color: #F8FAFC;">{{ stats.total_employees }}</h3>
+                </div>
+                <div class="d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59, 130, 246, 0.1);">
+                    <i class="fa-solid fa-users" style="color: #3B82F6;"></i>
+                </div>
+            </div>
+            <div style="font-size: 0.78rem;">
+                <span class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded" style="background: rgba(16, 185, 129, 0.1); color: #10B981; font-weight: 600;"><i class="fa-solid fa-arrow-trend-up" style="font-size: 0.65rem;"></i> Active</span>
+                <span class="text-muted ms-1">staff members</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card p-4 metric-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="text-muted d-block" style="font-size: 0.8rem; font-weight: 500;">Pending Approvals</span>
+                    <h3 class="metric-value" style="color: #F8FAFC;">{{ stats.pending }}</h3>
+                </div>
+                <div class="d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.1);">
+                    <i class="fa-solid fa-clock" style="color: #F59E0B;"></i>
+                </div>
+            </div>
+            <div style="font-size: 0.78rem;">
+                <span class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B; font-weight: 600;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 0.65rem;"></i> Awaiting</span>
+                <span class="text-muted ms-1">decision</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card p-4 metric-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="text-muted d-block" style="font-size: 0.8rem; font-weight: 500;">Approved Leaves</span>
+                    <h3 class="metric-value" style="color: #F8FAFC;">{{ stats.approved }}</h3>
+                </div>
+                <div class="d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border-radius: 12px; background: rgba(16, 185, 129, 0.1);">
+                    <i class="fa-solid fa-circle-check" style="color: #10B981;"></i>
+                </div>
+            </div>
+            <div style="font-size: 0.78rem;">
+                <span class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded" style="background: rgba(16, 185, 129, 0.1); color: #10B981; font-weight: 600;"><i class="fa-solid fa-arrow-trend-up" style="font-size: 0.65rem;"></i> +12%</span>
+                <span class="text-muted ms-1">this year</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="glass-card p-4 metric-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="text-muted d-block" style="font-size: 0.8rem; font-weight: 500;">On Leave Today</span>
+                    <h3 class="metric-value" style="color: #F8FAFC;">{{ stats.on_leave_today }}</h3>
+                </div>
+                <div class="d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; border-radius: 12px; background: rgba(244, 63, 94, 0.1);">
+                    <i class="fa-solid fa-plane-departure" style="color: #F43F5E;"></i>
+                </div>
+            </div>
+            <div style="font-size: 0.78rem;">
+                <span class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded" style="background: rgba(244, 63, 94, 0.1); color: #F43F5E; font-weight: 600;"><i class="fa-solid fa-circle" style="font-size: 0.4rem;"></i> Currently</span>
+                <span class="text-muted ms-1">out of office</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4 animate-fade-in">
+    <!-- Leave Type Distribution -->
+    <div class="col-lg-6 mb-4 mb-lg-0">
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Leave Type Distribution</h5>
+            <div style="height: 250px; position: relative;">
+                <canvas id="leaveDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <!-- Monthly Leave Trend -->
+    <div class="col-lg-6">
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>Monthly Leave Trend</h5>
+            <div style="height: 250px; position: relative;">
+                <canvas id="leaveTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Management Grid -->
+<div class="row animate-fade-in">
+    <!-- Left Column: Pending Leave Requests -->
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-white m-0"><i class="fa-solid fa-envelope-open-text me-2 text-primary"></i>Pending Leave Requests</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{% url 'admin_run_ai_agent' %}" class="btn btn-sm btn-gradient-primary" style="font-size: 0.8rem; border-radius: 8px;">
+                        <i class="fa-solid fa-robot me-1"></i>Run AI Agent
+                    </a>
+                    <a href="{% url 'admin_leave_requests' %}?status=PENDING" class="btn btn-sm btn-outline-secondary glass-input text-white" style="font-size: 0.8rem; border-radius: 8px;">View All</a>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Dates</th>
+                            <th>Days</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in pending_requests %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if req.user.profile_pic %}
+                                        <img src="{{ req.user.profile_pic.url }}" alt="Profile" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 32px; height: 32px; font-size: 0.85rem; background: linear-gradient(135deg, #6366F1, #4F46E5);">
+                                            {{ req.user.username|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <span class="text-white fw-semibold d-block" style="font-size: 0.85rem;">{{ req.user.get_full_name|default:req.user.username }}</span>
+                                        <small class="text-muted" style="font-size: 0.75rem;">{{ req.user.department }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="d-inline-block rounded-circle" style="width: 8px; height: 8px; background-color: {{ req.leave_type.color_code }};"></span>
+                                    <span>{{ req.leave_type.name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-white d-block" style="font-size: 0.8rem;">{{ req.start_date }}</small>
+                                <small class="text-secondary" style="font-size: 0.7rem;">to {{ req.end_date }}</small>
+                            </td>
+                            <td class="text-white fw-bold">{{ req.duration }}</td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 140px;" title="{{ req.reason }}">{{ req.reason }}</span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm me-1 px-2.5 py-1" style="font-size: 0.75rem; border-radius: 20px; background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.3)';" onmouseout="this.style.background='rgba(168,85,247,0.15)';" onclick="openOffcanvasFromElement(this)"
+                                    data-id="{{ req.pk }}"
+                                    data-employee-name="{{ req.user.get_full_name|default:req.user.username }}"
+                                    data-department="{{ req.user.department|default:'Engineering' }}"
+                                    data-designation="{{ req.user.designation|default:'Senior Employee' }}"
+                                    data-avatar="{% if req.user.profile_pic %}{{ req.user.profile_pic.url }}{% endif %}"
+                                    data-leave-type="{{ req.leave_type.name }}"
+                                    data-leave-color="{{ req.leave_type.color_code }}"
+                                    data-start-date="{{ req.start_date }}"
+                                    data-end-date="{{ req.end_date }}"
+                                    data-duration="{{ req.duration }}"
+                                    data-reason="{{ req.reason }}"
+                                    data-status="{{ req.status }}"
+                                    data-status-display="{{ req.get_status_display }}"
+                                    data-medical-certificate="{% if req.medical_certificate %}{{ req.medical_certificate.url }}{% endif %}"
+                                    data-admin-remarks="{{ req.admin_remarks|default:'' }}"
+                                    data-rejection-reason="{{ req.rejection_reason|default:'' }}"
+                                    data-hr-approved-by="{% if req.hr_approved_by %}{{ req.hr_approved_by.get_full_name|default:req.hr_approved_by.username }}{% endif %}"
+                                    data-hr-approved-at="{% if req.hr_approved_at %}{{ req.hr_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-admin-approved-by="{% if req.admin_approved_by %}{{ req.admin_approved_by.get_full_name|default:req.admin_approved_by.username }}{% endif %}"
+                                    data-admin-approved-at="{% if req.admin_approved_at %}{{ req.admin_approved_at|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-applied-on="{% if req.applied_on %}{{ req.applied_on|date:'M d, Y • h:i A' }}{% endif %}"
+                                    data-balances="{{ req.user_balances_json|escape }}"
+                                    data-reassignments="{{ req.task_reassignments_json|escape }}"
+                                >
+                                    <i class="fa-solid fa-sidebar me-1"></i> ✨ View Details
+                                </button>
+                                <button type="button" class="btn btn-sm me-1 px-3" style="font-size: 0.75rem; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); transition: all 0.2s;" onmouseover="this.style.background='#10B981';this.style.color='#fff';this.style.boxShadow='0 0 15px rgba(16,185,129,0.4)'" onmouseout="this.style.background='rgba(16,185,129,0.1)';this.style.color='#10B981';this.style.boxShadow='none'" onclick="openActionModal({{ req.pk }}, 'approve', '{{ req.user.username }}')">
+                                    <i class="fa-solid fa-check me-1"></i>Approve
+                                </button>
+                                <button type="button" class="btn btn-sm px-3" style="font-size: 0.75rem; border-radius: 20px; background: rgba(244, 63, 94, 0.1); color: #F43F5E; border: 1px solid rgba(244, 63, 94, 0.2); transition: all 0.2s;" onmouseover="this.style.background='#F43F5E';this.style.color='#fff';this.style.boxShadow='0 0 15px rgba(244,63,94,0.4)'" onmouseout="this.style.background='rgba(244,63,94,0.1)';this.style.color='#F43F5E';this.style.boxShadow='none'" onclick="openActionModal({{ req.pk }}, 'reject', '{{ req.user.username }}')">
+                                    <i class="fa-solid fa-xmark me-1"></i>Reject
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div style="opacity: 0.6;">
+                                    <i class="fa-solid fa-inbox" style="font-size: 2.5rem; color: var(--text-muted);"></i>
+                                    <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem; font-weight: 500;">All caught up!</p>
+                                    <p class="text-muted" style="font-size: 0.8rem;">No pending leave requests at the moment.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% include 'includes/detailed_leave_offcanvas.html' %}
+
+    
+    <!-- Right Column: Who's Out Today -->
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-plane-departure me-2 text-danger"></i>Who's Out Today</h5>
+            <div class="d-flex flex-column gap-3">
+                {% for req in on_leave_today %}
+                <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                    <div class="d-flex align-items-center gap-2">
+                        {% if req.user.profile_pic %}
+                            <img src="{{ req.user.profile_pic.url }}" alt="Profile" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                        {% else %}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold bg-secondary" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                {{ req.user.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <span class="text-white fw-semibold d-block" style="font-size: 0.85rem;">{{ req.user.get_full_name|default:req.user.username }}</span>
+                            <small class="text-muted" style="font-size: 0.75rem;">{{ req.leave_type.name }}</small>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-secondary d-block" style="font-size: 0.7rem;">Return date:</small>
+                        <span class="badge" style="background: {{ req.leave_type.color_code }}20; color: {{ req.leave_type.color_code }}; border: 1px solid {{ req.leave_type.color_code }}30; font-size: 0.75rem;">
+                            {{ req.end_date }}
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4" style="opacity: 0.6;">
+                    <i class="fa-solid fa-face-smile" style="font-size: 2rem; color: var(--text-muted);"></i>
+                    <p class="mt-2 mb-0" style="font-size: 0.85rem;">Everyone's at work today!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve/Reject Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border border-light border-opacity-10" style="background: var(--bg-secondary); backdrop-filter: blur(12px);">
+            <div class="modal-header border-bottom border-light border-opacity-10">
+                <h5 class="modal-title text-white" id="actionModalLabel">Process Leave Request</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="actionForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-white" id="modalText"></p>
+                    <div class="mb-3">
+                        <label for="admin_remarks" class="form-label text-secondary">Admin Remarks</label>
+                        <textarea class="form-control glass-input" id="admin_remarks" name="admin_remarks" rows="3" placeholder="Add approval remarks or reason for rejection..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-light border-opacity-10">
+                    <button type="button" class="btn btn-outline-secondary glass-input" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" id="submitBtn" class="btn">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- ChartJS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Process Modal Setup
+    let actionModalInstance;
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        actionModalInstance = new bootstrap.Modal(document.getElementById('actionModal'));
+        loadCharts();
+    });
+
+    function openActionModal(reqId, action, username) {
+        const form = document.getElementById('actionForm');
+        const text = document.getElementById('modalText');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        form.action = `/admin/leave-request/${reqId}/${action}/`;
+        
+        if (action === 'approve') {
+            text.textContent = `Are you sure you want to approve the leave request from ${username}?`;
+            submitBtn.textContent = 'Approve Leave';
+            submitBtn.className = 'btn btn-gradient-primary';
+        } else {
+            text.textContent = `Are you sure you want to reject the leave request from ${username}?`;
+            submitBtn.textContent = 'Reject Leave';
+            submitBtn.className = 'btn btn-gradient-danger';
+        }
+        
+        document.getElementById('admin_remarks').value = '';
+        actionModalInstance.show();
+    }
+    
+    // Load Charts via AJAX APIs
+    function loadCharts() {
+        fetch('/api/charts/')
+            .then(res => res.json())
+            .then(data => {
+                // Pie Chart
+                const distCtx = document.getElementById('leaveDistributionChart').getContext('2d');
+                new Chart(distCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.distribution.labels.length > 0 ? data.distribution.labels : ['No Data'],
+                        datasets: [{
+                            data: data.distribution.counts.length > 0 ? data.distribution.counts : [1],
+                            backgroundColor: data.distribution.colors.length > 0 ? data.distribution.colors : ['#334155'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: '#9ca3af',
+                                    font: { family: 'Plus Jakarta Sans', size: 11 }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Trend Bar Chart
+                const trendCtx = document.getElementById('leaveTrendChart').getContext('2d');
+                const gradient = trendCtx.createLinearGradient(0, 0, 0, 250);
+                gradient.addColorStop(0, '#6366f1');
+                gradient.addColorStop(1, '#a855f7');
+                
+                new Chart(trendCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.trends.labels,
+                        datasets: [{
+                            label: 'Applications',
+                            data: data.trends.counts,
+                            backgroundColor: gradient,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { color: '#9ca3af', stepSize: 1 }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#9ca3af' }
+                            }
+                        }
+                    }
+                });
+            });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,940 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LeaveEase - Smart Leave Management System{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom Style CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=2.0">
+    <style>
+        /* ══════════════════════════════════════════════════════════════
+           AI LEAVE ASSISTANT SIDEBAR WIDGET (PREMIUM DEEP DARK MODE)
+           ══════════════════════════════════════════════════════════════ */
+        .sidebar-ai-widget {
+            background: #0F0F11 !important;
+            border: 1px solid #252529 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+            margin: 0.85rem 0.65rem 0.5rem;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .sidebar-ai-widget::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #6366F1 0%, #a855f7 50%, #3b82f6 100%);
+        }
+
+        .ai-widget-header {
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0.9rem;
+            user-select: none;
+            transition: background 0.2s ease;
+        }
+
+        .ai-widget-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .ai-widget-title {
+            align-items: center;
+            display: flex;
+            gap: 0.6rem;
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: #F8FAFC !important;
+            letter-spacing: -0.01em;
+        }
+
+        .ai-widget-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff !important;
+            font-size: 0.75rem;
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.45);
+            flex-shrink: 0;
+        }
+
+        .ai-widget-toggle {
+            color: #888888 !important;
+            font-size: 0.75rem;
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar-ai-widget.collapsed .ai-widget-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .ai-widget-body {
+            padding: 0.85rem 0.9rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            border-top: 1px solid #1A1A1E;
+            transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+            max-height: 600px;
+            opacity: 1;
+        }
+
+        .sidebar-ai-widget.collapsed .ai-widget-body {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            overflow: hidden;
+            border-top: none;
+        }
+
+        .ai-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .ai-widget-label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #888888 !important;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        /* Elevated dark surface for inputs & selects */
+        .ai-widget-select,
+        .ai-widget-textarea,
+        #aiWidgetLeaveType,
+        #aiWidgetKeywords,
+        .sidebar-ai-widget select.form-select,
+        .sidebar-ai-widget textarea.form-control {
+            background-color: #1A1A1D !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a855f7' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+            border: 1px solid #2D2D30 !important;
+            border-radius: 8px !important;
+            color: #E4E4E7 !important;
+            font-size: 0.82rem !important;
+            font-weight: 400 !important;
+            padding: 0.48rem 0.7rem !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+            box-shadow: none !important;
+        }
+
+        .sidebar-ai-widget select.form-select option,
+        #aiWidgetLeaveType option {
+            background-color: #1A1A1D !important;
+            color: #E4E4E7 !important;
+        }
+
+        .ai-widget-textarea,
+        #aiWidgetKeywords,
+        .sidebar-ai-widget textarea.form-control {
+            background-image: none !important;
+            min-height: 60px !important;
+            resize: vertical;
+        }
+
+        .sidebar-ai-widget input::placeholder,
+        .sidebar-ai-widget textarea::placeholder,
+        #aiWidgetKeywords::placeholder {
+            color: #71717A !important;
+            font-size: 0.78rem !important;
+        }
+
+        .sidebar-ai-widget select:focus,
+        .sidebar-ai-widget textarea:focus,
+        .ai-widget-select:focus,
+        .ai-widget-textarea:focus,
+        #aiWidgetLeaveType:focus,
+        #aiWidgetKeywords:focus {
+            background-color: #1A1A1D !important;
+            border-color: #6366F1 !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important;
+            color: #E4E4E7 !important;
+            outline: none !important;
+        }
+
+        /* Premium AI Action Button */
+        .btn-ai-generate,
+        #aiGenerateBtn {
+            background: rgba(99, 102, 241, 0.16) !important;
+            border: 1px solid rgba(139, 92, 246, 0.4) !important;
+            color: #C4B5FD !important;
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            padding: 0.52rem 0.85rem !important;
+            border-radius: 8px !important;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            cursor: pointer;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-ai-generate:hover,
+        #aiGenerateBtn:hover {
+            background: rgba(99, 102, 241, 0.28) !important;
+            border-color: rgba(139, 92, 246, 0.6) !important;
+            color: #FFFFFF !important;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3) !important;
+            transform: translateY(-1px);
+        }
+
+        .btn-ai-generate:disabled,
+        #aiGenerateBtn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Output Container (Terminal aesthetic) */
+        .ai-widget-result,
+        #aiWidgetResultContainer {
+            background: #121215 !important;
+            border: 1px solid rgba(99, 102, 241, 0.25) !important;
+            border-radius: 8px !important;
+            padding: 0.75rem;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+            position: relative;
+            animation: fadeSlideIn 0.25s ease;
+        }
+
+        .ai-output-badge {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: #818CF8;
+            background: rgba(99, 102, 241, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .ai-generated-text,
+        #aiGeneratedReasonText {
+            font-family: 'SF Mono', 'Fira Code', 'Roboto Mono', Monaco, monospace;
+            font-size: 0.78rem;
+            color: #E4E4E7 !important;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            margin-top: 0.35rem;
+        }
+
+        /* Primary CTA Button (Auto-fill) */
+        .btn-ai-autofill,
+        #aiAutofillBtn {
+            background: #FFFFFF !important;
+            color: #0F172A !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 8px !important;
+            border: none !important;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            margin-top: 0.6rem;
+            box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+            transition: all 0.2s ease !important;
+        }
+
+        .btn-ai-autofill:hover,
+        #aiAutofillBtn:hover {
+            background: #F1F5F9 !important;
+            color: #000000 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(255, 255, 255, 0.25) !important;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div>
+                <h4 class="brand-text m-0">LeaveEase</h4>
+                <small class="text-muted" style="font-size: 0.72rem; letter-spacing: 0.04em;">Leave Management</small>
+            </div>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'hr_dashboard' or request.resolver_match.url_name == 'employee_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            
+            {% if request.user.role == 'ADMIN' %}
+            <li class="menu-header">Management</li>
+            <li>
+                <a href="{% url 'admin_leave_requests' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_leave_requests' %}active{% endif %}">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                    <span>Leave Requests</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_employees' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_employees' or request.resolver_match.url_name == 'admin_employee_detail' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Employees</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_leave_types' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_leave_types' %}active{% endif %}">
+                    <i class="fa-solid fa-tags"></i>
+                    <span>Leave Types</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_holidays' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_holidays' %}active{% endif %}">
+                    <i class="fa-solid fa-umbrella-beach"></i>
+                    <span>Manage Holidays</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_ai_agents' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_ai_agents' %}active{% endif %}">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>AI Agents</span>
+                </a>
+            </li>
+            {% elif request.user.role == 'HR' %}
+            <li class="menu-header">HR Review</li>
+            <li>
+                <a href="{% url 'hr_leave_requests' %}" class="sidebar-link {% if request.resolver_match.url_name == 'hr_leave_requests' %}active{% endif %}">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                    <span>Review Leave Requests</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'hr_employees' %}" class="sidebar-link {% if request.resolver_match.url_name == 'hr_employees' or request.resolver_match.url_name == 'hr_employee_detail' %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Employee Directory</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="menu-header">Leaves</li>
+            <li>
+                <a href="{% url 'apply_leave' %}" class="sidebar-link {% if request.resolver_match.url_name == 'apply_leave' %}active{% endif %}">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Apply for Leave</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'leave_history' %}" class="sidebar-link {% if request.resolver_match.url_name == 'leave_history' %}active{% endif %}">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>My Leave History</span>
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="menu-header">General</li>
+            <li>
+                <a href="{% url 'attendance_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'attendance_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-user-clock"></i>
+                    <span>Attendance Analyzer</span>
+                </a>
+            </li>
+
+            <!-- AI Leave Assistant Sidebar Widget -->
+            <li>
+                <div class="sidebar-ai-widget collapsed" id="sidebarAiWidget">
+                    <div class="ai-widget-header" id="aiWidgetHeader" role="button" aria-expanded="false" title="Click to toggle AI Leave Assistant">
+                        <div class="ai-widget-title">
+                            <div class="ai-widget-icon">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <span>AI Leave Assistant</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down ai-widget-toggle" id="aiWidgetToggleIcon"></i>
+                    </div>
+                    <div class="ai-widget-body" id="aiWidgetBody">
+                        <div class="ai-input-group">
+                            <label class="ai-widget-label" for="aiWidgetLeaveType">
+                                <i class="fa-solid fa-sliders"></i> LEAVE TYPE
+                            </label>
+                            <select class="form-select ai-widget-select" id="aiWidgetLeaveType">
+                                <option value="Sick Leave">Sick Leave</option>
+                                <option value="Casual Leave">Casual Leave</option>
+                                <option value="Annual Leave">Annual Leave</option>
+                                <option value="Maternity Leave">Maternity Leave</option>
+                                <option value="Paternity Leave">Paternity Leave</option>
+                                <option value="Emergency Leave">Emergency Leave</option>
+                            </select>
+                        </div>
+                        <div class="ai-input-group">
+                            <label class="ai-widget-label" for="aiWidgetKeywords">
+                                <i class="fa-solid fa-key"></i> KEYWORDS
+                            </label>
+                            <textarea class="form-control ai-widget-textarea" id="aiWidgetKeywords" rows="2" placeholder="e.g. food poisoning, need 1 day rest"></textarea>
+                        </div>
+                        <button type="button" class="btn-ai-generate" id="aiGenerateBtn">
+                            <i class="fa-solid fa-sparkles"></i>
+                            <span id="aiGenerateBtnText">Generate Reason</span>
+                        </button>
+                        <div class="ai-widget-result d-none" id="aiWidgetResultContainer">
+                            <div class="ai-output-header mb-1 d-flex justify-content-between align-items-center">
+                                <span class="ai-output-badge"><i class="fa-solid fa-terminal me-1"></i> AI DRAFT</span>
+                            </div>
+                            <div id="aiGeneratedReasonText" class="ai-generated-text"></div>
+                            <button type="button" class="btn-ai-autofill" id="aiAutofillBtn">
+                                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Auto-fill Application
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </li>
+
+            <li>
+                <a href="{% url 'calendar' %}" class="sidebar-link {% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
+
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Calendar</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Profile &amp; Settings</span>
+                </a>
+            </li>
+            <li class="mt-auto pt-4">
+                <a href="{% url 'logout' %}" class="sidebar-link sidebar-link-danger">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+        <!-- Top Navbar / Context Bar -->
+        <header class="top-navbar">
+            <div class="top-navbar-left">
+                <button class="btn btn-outline-secondary d-lg-none glass-input" id="sidebar-toggle" style="min-height:38px; padding:0.4rem 0.7rem;">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="d-none d-sm-block">
+                    <h4 class="m-0 font-heading">{% block page_title %}Overview{% endblock %}</h4>
+                </div>
+            </div>
+            
+            <div class="top-navbar-right">
+                <!-- Global Search (Cmd+K) -->
+                <div class="search-bar d-none d-md-flex" id="globalSearch">
+                    <i class="fa-solid fa-magnifying-glass search-bar-icon"></i>
+                    <input type="text" class="glass-input search-bar-input" placeholder="Search..." id="searchInput">
+                    <kbd class="search-kbd">⌘K</kbd>
+                </div>
+
+                <!-- Notifications Bell Triage Dropdown -->
+                <div class="notification-bell" id="notificationBell">
+                    <button class="nav-icon-btn" id="notificationBellBtn" aria-label="Notifications, {{ unread_notifications_count }} unread" aria-expanded="false" aria-controls="notificationDropdown" aria-haspopup="true">
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="notification-ping {% if unread_notifications_count == 0 %}d-none{% endif %}" id="notifPing"></span>
+                        <span class="notification-badge {% if unread_notifications_count == 0 %}d-none{% endif %}" id="notifBadge">{{ unread_notifications_count }}</span>
+                    </button>
+                    <div class="notification-dropdown" id="notificationDropdown" role="dialog" aria-label="Notification Triage Center" aria-hidden="true">
+                        <div class="notification-dropdown-header">
+                            <div class="d-flex align-items-center gap-2">
+                                <h6 class="m-0 font-heading">Notifications</h6>
+                                <span class="badge rounded-pill bg-primary-subtle text-primary" id="notifHeaderCount" style="font-size: 0.7rem;">{{ unread_notifications_count }} Unread</span>
+                            </div>
+                            <button type="button" class="btn-mark-all-read" id="markAllReadBtn" data-url="{% url 'mark_notifications_read' %}" aria-label="Mark all notifications as read">
+                                <i class="fa-solid fa-check-double me-1"></i> Mark all read
+                            </button>
+                        </div>
+
+                        <!-- Segmented Control / Tab Navigation -->
+                        <div class="notif-tabs" role="tablist" aria-label="Notification Categories">
+                            <button type="button" role="tab" class="notif-tab active" id="tab-status" aria-selected="true" aria-controls="panel-status" tabindex="0">
+                                <i class="fa-solid fa-clock-rotate-left me-1"></i> Status
+                            </button>
+                            <button type="button" role="tab" class="notif-tab" id="tab-handover" aria-selected="false" aria-controls="panel-handover" tabindex="-1">
+                                <i class="fa-solid fa-tasks me-1"></i> Handover
+                            </button>
+                            <button type="button" role="tab" class="notif-tab" id="tab-holidays" aria-selected="false" aria-controls="panel-holidays" tabindex="-1">
+                                <i class="fa-solid fa-umbrella-beach me-1"></i> Holidays
+                            </button>
+                        </div>
+
+                        <div class="notification-dropdown-body">
+                            <!-- Panel 1: Status Updates -->
+                            <div role="tabpanel" id="panel-status" aria-labelledby="tab-status" class="notif-panel active">
+                                {% if recent_notifications %}
+                                    {% for notif in recent_notifications %}
+                                        <div class="notification-item {% if not notif.is_read %}unread{% endif %}">
+                                            <div class="d-flex align-items-start gap-2">
+                                                <div class="notif-icon-circle status-icon">
+                                                    <i class="fa-solid fa-circle-info"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <p class="m-0 notif-text">{{ notif.message }}</p>
+                                                    <small class="notif-time">{{ notif.created_at|timesince }} ago</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="p-4 text-center text-muted">
+                                        <i class="fa-regular fa-bell-slash d-block mb-2 style-muted-icon" style="font-size: 1.5rem;"></i>
+                                        <small>No recent status updates</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Panel 2: Handover Tasks -->
+                            <div role="tabpanel" id="panel-handover" aria-labelledby="tab-handover" class="notif-panel" hidden>
+                                <div class="notification-item">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="notif-icon-circle handover-icon">
+                                            <i class="fa-solid fa-user-check"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <p class="m-0 notif-text"><strong>Coverage Sync:</strong> Delegate your pending tasks and handover responsibilities before your upcoming leave starts.</p>
+                                            <small class="notif-time">System Reminder</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Panel 3: Holidays -->
+                            <div role="tabpanel" id="panel-holidays" aria-labelledby="tab-holidays" class="notif-panel" hidden>
+                                <div class="notification-item">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <div class="notif-icon-circle holiday-icon">
+                                            <i class="fa-solid fa-umbrella-beach"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <p class="m-0 notif-text"><strong>Upcoming Public Holidays:</strong> Review the holiday calendar to optimize your leave applications.</p>
+                                            <small class="notif-time">HR Notice</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="notification-dropdown-footer">
+                            <small class="text-muted"><i class="fa-solid fa-shield-halved me-1"></i> Notification triage active</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Avatar & Status Menu -->
+                <div class="user-menu" id="userMenu">
+                    <div class="user-menu-trigger">
+                        <div class="text-end d-none d-sm-block">
+                            <span class="user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+                            <small class="user-role">{{ request.user.get_role_display }}</small>
+                        </div>
+                        {% if request.user.profile_pic %}
+                            <img src="{{ request.user.profile_pic.url }}" alt="Profile" class="user-avatar-img">
+                        {% else %}
+                            <div class="user-avatar-fallback">
+                                {{ request.user.username|slice:":1"|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <!-- Status Dropdown -->
+                    <div class="user-status-dropdown" id="userStatusDropdown">
+                        <div class="user-status-header">
+                            <span class="fw-semibold" style="color: var(--text-primary);">Quick Status</span>
+                        </div>
+                        <button class="status-option active" data-status="in-office">
+                            <span class="status-dot" style="background: #10B981;"></span>
+                            In Office
+                        </button>
+                        <button class="status-option" data-status="on-leave">
+                            <span class="status-dot" style="background: #F59E0B;"></span>
+                            On Leave
+                        </button>
+                        <button class="status-option" data-status="remote">
+                            <span class="status-dot" style="background: #6366F1;"></span>
+                            Remote
+                        </button>
+                        <div class="user-status-divider"></div>
+                        <a href="{% url 'profile' %}" class="status-option">
+                            <i class="fa-solid fa-user-gear" style="width: 18px; text-align: center;"></i>
+                            Profile &amp; Settings
+                        </a>
+                        <a href="{% url 'logout' %}" class="status-option status-option-danger">
+                            <i class="fa-solid fa-right-from-bracket" style="width: 18px; text-align: center;"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        {% if messages %}
+            <div class="dashboard-toast-container">
+            {% for message in messages %}
+                {% if message.tags == 'error' %}
+                <div class="alert alert-danger alert-dismissible fade show glass-card mb-3" role="alert">
+                {% else %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show glass-card mb-3" role="alert">
+                {% endif %}
+                    <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% elif message.tags == 'error' %}fa-circle-xmark{% elif message.tags == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Content Block -->
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script>
+        // Sidebar responsive toggler
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('show');
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.contains('show') ? closeSidebar() : openSidebar();
+            });
+        }
+        if (overlay) {
+            overlay.addEventListener('click', closeSidebar);
+        }
+
+        // Notification dropdown & triage tabs logic
+        const bellBtn = document.getElementById('notificationBellBtn');
+        const dropdown = document.getElementById('notificationDropdown');
+        if (bellBtn && dropdown) {
+            bellBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = dropdown.classList.toggle('show');
+                bellBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                dropdown.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+                
+                const usd = document.getElementById('userStatusDropdown');
+                if (usd) usd.classList.remove('show');
+            });
+
+            // Tab switching & keyboard navigation
+            const notifTabs = dropdown.querySelectorAll('[role="tab"]');
+            const notifPanels = dropdown.querySelectorAll('[role="tabpanel"]');
+
+            function switchNotifTab(targetTab) {
+                notifTabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                    t.setAttribute('tabindex', '-1');
+                });
+                notifPanels.forEach(p => {
+                    p.classList.remove('active');
+                    p.hidden = true;
+                });
+
+                targetTab.classList.add('active');
+                targetTab.setAttribute('aria-selected', 'true');
+                targetTab.setAttribute('tabindex', '0');
+                targetTab.focus();
+
+                const targetPanelId = targetTab.getAttribute('aria-controls');
+                const targetPanel = document.getElementById(targetPanelId);
+                if (targetPanel) {
+                    targetPanel.classList.add('active');
+                    targetPanel.hidden = false;
+                }
+            }
+
+            notifTabs.forEach((tab, idx) => {
+                tab.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    switchNotifTab(tab);
+                });
+
+                tab.addEventListener('keydown', (e) => {
+                    let newIdx = null;
+                    if (e.key === 'ArrowRight') {
+                        newIdx = (idx + 1) % notifTabs.length;
+                    } else if (e.key === 'ArrowLeft') {
+                        newIdx = (idx - 1 + notifTabs.length) % notifTabs.length;
+                    }
+                    if (newIdx !== null) {
+                        e.preventDefault();
+                        switchNotifTab(notifTabs[newIdx]);
+                    }
+                });
+            });
+
+            // Prevent clicks inside dropdown from closing dropdown
+            dropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            // Optimistic "Mark all as read"
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Optimistic UI updates
+                    const badge = document.getElementById('notifBadge');
+                    const ping = document.getElementById('notifPing');
+                    const headerCount = document.getElementById('notifHeaderCount');
+                    
+                    if (badge) badge.classList.add('d-none');
+                    if (ping) ping.classList.add('d-none');
+                    if (headerCount) {
+                        headerCount.textContent = '0 Unread';
+                        headerCount.classList.replace('bg-primary-subtle', 'bg-secondary-subtle');
+                        headerCount.classList.replace('text-primary', 'text-muted');
+                    }
+                    bellBtn.setAttribute('aria-label', 'Notifications, 0 unread');
+
+                    document.querySelectorAll('.notification-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                    });
+
+                    // Send fetch request in background
+                    const targetUrl = markAllReadBtn.getAttribute('data-url');
+                    if (targetUrl) {
+                        fetch(targetUrl, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        }).catch(err => console.error("Failed to mark notifications read:", err));
+                    }
+                });
+            }
+        }
+
+        // User menu dropdown
+        const userMenu = document.getElementById('userMenu');
+        const userDropdown = document.getElementById('userStatusDropdown');
+        if (userMenu) {
+            userMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdown.classList.toggle('show');
+                if (dropdown) {
+                    dropdown.classList.remove('show');
+                    if (bellBtn) bellBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        // Status toggle
+        document.querySelectorAll('.status-option[data-status]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.status-option[data-status]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Close all dropdowns on outside click or Escape key
+        document.addEventListener('click', () => {
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+                if (bellBtn) bellBtn.setAttribute('aria-expanded', 'false');
+            }
+            if (userDropdown && userDropdown.classList.contains('show')) {
+                userDropdown.classList.remove('show');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                    if (bellBtn) {
+                        bellBtn.setAttribute('aria-expanded', 'false');
+                        bellBtn.focus();
+                    }
+                }
+                if (userDropdown && userDropdown.classList.contains('show')) {
+                    userDropdown.classList.remove('show');
+                }
+            }
+        });
+
+        // Cmd+K search shortcut
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.focus();
+            }
+        });
+
+        // Helper to retrieve cookie by name
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // ============================================================
+        // AI LEAVE ASSISTANT WIDGET LOGIC
+        // ============================================================
+        const aiWidget = document.getElementById('sidebarAiWidget');
+        const aiHeader = document.getElementById('aiWidgetHeader');
+        const aiGenerateBtn = document.getElementById('aiGenerateBtn');
+        const aiLeaveTypeSelect = document.getElementById('aiWidgetLeaveType');
+        const aiKeywordsInput = document.getElementById('aiWidgetKeywords');
+        const aiResultContainer = document.getElementById('aiWidgetResultContainer');
+        const aiReasonText = document.getElementById('aiGeneratedReasonText');
+        const aiAutofillBtn = document.getElementById('aiAutofillBtn');
+
+        if (aiWidget && aiHeader) {
+            aiHeader.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isCollapsed = aiWidget.classList.toggle('collapsed');
+                aiHeader.setAttribute('aria-expanded', !isCollapsed);
+            });
+        }
+
+        if (aiGenerateBtn) {
+            aiGenerateBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const leaveType = aiLeaveTypeSelect ? aiLeaveTypeSelect.value : 'Sick Leave';
+                const keywords = aiKeywordsInput ? aiKeywordsInput.value.trim() : '';
+
+                // Spinner state
+                aiGenerateBtn.disabled = true;
+                const originalBtnContent = aiGenerateBtn.innerHTML;
+                aiGenerateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+
+                try {
+                    const response = await fetch('{% url "generate_leave_reason" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            leave_type: leaveType,
+                            keywords: keywords
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success && data.reason) {
+                        aiReasonText.textContent = data.reason;
+                        aiResultContainer.classList.remove('d-none');
+                    } else {
+                        aiReasonText.textContent = 'Error: ' + (data.error || 'Failed to generate reason.');
+                        aiResultContainer.classList.remove('d-none');
+                    }
+                } catch (err) {
+                    console.error('AI Reason Generation error:', err);
+                    aiReasonText.textContent = 'Unable to connect to AI server. Please try again.';
+                    aiResultContainer.classList.remove('d-none');
+                } finally {
+                    aiGenerateBtn.disabled = false;
+                    aiGenerateBtn.innerHTML = originalBtnContent;
+                }
+            });
+        }
+
+        if (aiAutofillBtn) {
+            aiAutofillBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const generatedText = aiReasonText.textContent.trim();
+                if (!generatedText) return;
+
+                const mainTextarea = document.getElementById('leave_reason') || document.getElementById('id_reason');
+
+                if (mainTextarea) {
+                    mainTextarea.value = generatedText;
+                    mainTextarea.focus();
+                    mainTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // Visual highlight feedback
+                    mainTextarea.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+                    mainTextarea.style.borderColor = '#10B981';
+                    mainTextarea.style.boxShadow = '0 0 0 4px rgba(16, 185, 129, 0.25)';
+                    setTimeout(() => {
+                        mainTextarea.style.borderColor = '';
+                        mainTextarea.style.boxShadow = '';
+                    }, 2000);
+                } else {
+                    // Redirect to Apply Leave page with reason in sessionStorage
+                    sessionStorage.setItem('ai_pending_leave_reason', generatedText);
+                    window.location.href = '{% url "apply_leave" %}';
+                }
+            });
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

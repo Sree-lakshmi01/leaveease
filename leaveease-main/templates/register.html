@@ -1,0 +1,684 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up — LeaveEase</title>
+    <meta name="description" content="Create your LeaveEase account to streamline leave management for your team.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] },
+                    colors: {
+                        canvas: '#0b0f19',
+                        card: '#151c2c',
+                        'card-border': '#232d42',
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <style>
+        /* ── Scrollbar ──────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #232d42; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* ── Animations ─────────────────────────────────────────── */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33%      { transform: translate(30px, -20px) scale(1.05); }
+            66%      { transform: translate(-15px, 15px) scale(0.97); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33%      { transform: translate(-25px, 20px) scale(1.03); }
+            66%      { transform: translate(20px, -10px) scale(0.96); }
+        }
+
+        .animate-card  { animation: fadeInUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .stagger-1     { animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.10s both; }
+        .stagger-2     { animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both; }
+        .stagger-3     { animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.34s both; }
+        .stagger-4     { animation: fadeInUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.44s both; }
+
+        .glow-orb-1 { animation: float1 12s ease-in-out infinite; }
+        .glow-orb-2 { animation: float2 15s ease-in-out infinite; }
+        .glow-orb-3 { animation: float1 18s ease-in-out infinite reverse; }
+
+        /* ── Custom input overrides ─────────────────────────────── */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.6);
+            cursor: pointer;
+        }
+        select { appearance: none; -webkit-appearance: none; }
+
+        /* ── Role toggle slider ─────────────────────────────────── */
+        .role-slider {
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                        left 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* ── Upload zone ────────────────────────────────────────── */
+        .upload-zone { transition: all 0.25s ease; }
+        .upload-zone.drag-over {
+            border-color: #6366f1 !important;
+            background: rgba(99, 102, 241, 0.08) !important;
+        }
+        .upload-zone.has-file { border-color: #22c55e !important; }
+
+        /* ── Alert animation ────────────────────────────────────── */
+        .alert-slide-in {
+            animation: fadeInUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        /* ── Reduced motion ─────────────────────────────────────── */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-canvas min-h-screen font-sans text-white antialiased relative overflow-x-hidden">
+
+    <!-- ═══════════════ AMBIENT GLOW BACKGROUNDS ═══════════════ -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div class="glow-orb-1 absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full bg-indigo-600/[0.07] blur-[120px]"></div>
+        <div class="glow-orb-2 absolute -top-20 -right-40 w-[450px] h-[450px] rounded-full bg-violet-600/[0.06] blur-[100px]"></div>
+        <div class="glow-orb-3 absolute bottom-[-100px] left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-blue-600/[0.04] blur-[130px]"></div>
+        <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle, #fff 1px, transparent 1px); background-size: 32px 32px;"></div>
+    </div>
+
+    <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+    <main class="relative z-10 min-h-screen flex items-center justify-center px-4 py-10 sm:py-16">
+        <div class="w-full max-w-[720px] animate-card">
+
+            <!-- ── Card Container ──────────────────────────────── -->
+            <div class="bg-card/80 backdrop-blur-xl border border-card-border rounded-2xl shadow-2xl shadow-black/30 overflow-hidden">
+
+                <!-- ── Header ──────────────────────────────────── -->
+                <div class="px-6 sm:px-10 pt-8 sm:pt-10 pb-6 text-center stagger-1">
+                    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/20 mb-5 mx-auto relative group cursor-default">
+                        <i data-lucide="calendar-check" class="w-7 h-7 text-indigo-400"></i>
+                        <div class="absolute inset-0 rounded-2xl bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
+                    <h1 class="text-2xl sm:text-[28px] font-extrabold tracking-tight text-white leading-tight">
+                        Create your account
+                    </h1>
+                    <p class="mt-2 text-sm text-slate-400 max-w-sm mx-auto leading-relaxed">
+                        Join <span class="text-indigo-400 font-semibold">LeaveEase</span> to streamline your leave management workflow
+                    </p>
+                    <div class="mt-5 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent"></div>
+                </div>
+
+                <!-- ── Flash Messages (Django) ──────────────────── -->
+                {% if messages %}
+                <div class="px-6 sm:px-10 mb-2">
+                    {% for message in messages %}
+                    <div class="alert-slide-in flex items-center gap-3 px-4 py-3 mb-2 rounded-xl text-sm font-medium
+                        {% if message.tags == 'error' %}bg-red-500/10 border border-red-500/20 text-red-400
+                        {% elif message.tags == 'success' %}bg-emerald-500/10 border border-emerald-500/20 text-emerald-400
+                        {% elif message.tags == 'warning' %}bg-amber-500/10 border border-amber-500/20 text-amber-400
+                        {% else %}bg-blue-500/10 border border-blue-500/20 text-blue-400{% endif %}">
+                        {% if message.tags == 'error' %}<i data-lucide="x-circle" class="w-4 h-4 flex-shrink-0"></i>
+                        {% elif message.tags == 'success' %}<i data-lucide="check-circle-2" class="w-4 h-4 flex-shrink-0"></i>
+                        {% else %}<i data-lucide="info" class="w-4 h-4 flex-shrink-0"></i>{% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- ── Non-field errors ─────────────────────────── -->
+                {% if form.non_field_errors %}
+                <div class="px-6 sm:px-10 mb-2">
+                    <div class="alert-slide-in flex items-start gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-red-500/10 border border-red-500/20 text-red-400">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ═══════════════ FORM ═══════════════ -->
+                <form method="post" action="{% url 'register' %}" enctype="multipart/form-data" id="register-form" novalidate>
+                    {% csrf_token %}
+                    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+
+                    <div class="px-6 sm:px-10 pb-8 sm:pb-10 space-y-7">
+
+                        <!-- ══════════ SECTION 1: Account Setup ══════════ -->
+                        <section class="stagger-2">
+                            <div class="flex items-center gap-2.5 mb-4">
+                                <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/15">
+                                    <i data-lucide="user-circle" class="w-3.5 h-3.5 text-indigo-400"></i>
+                                </div>
+                                <h2 class="font-bold text-slate-200 uppercase" style="letter-spacing: 0.06em; font-size: 11px;">Account Setup</h2>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- First Name & Last Name -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="id_first_name" class="block text-[13px] font-semibold text-slate-300 mb-1.5">First Name <span class="text-red-400">*</span></label>
+                                        <div class="relative">
+                                            <i data-lucide="user" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                            <input type="text" id="id_first_name" name="first_name"
+                                                value="{{ form.first_name.value|default_if_none:'' }}"
+                                                placeholder="First Name" required
+                                                class="w-full h-11 pl-10 pr-4 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                        </div>
+                                        {% if form.first_name.errors %}<p class="text-xs text-red-400 mt-1.5 flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i>{{ form.first_name.errors.0 }}</p>{% endif %}
+                                    </div>
+                                    <div>
+                                        <label for="id_last_name" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Last Name <span class="text-red-400">*</span></label>
+                                        <div class="relative">
+                                            <i data-lucide="user" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                            <input type="text" id="id_last_name" name="last_name"
+                                                value="{{ form.last_name.value|default_if_none:'' }}"
+                                                placeholder="Last Name" required
+                                                class="w-full h-11 pl-10 pr-4 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                        </div>
+                                        {% if form.last_name.errors %}<p class="text-xs text-red-400 mt-1.5 flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i>{{ form.last_name.errors.0 }}</p>{% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Username -->
+                                <div>
+                                    <label for="id_username" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Username <span class="text-red-400">*</span></label>
+                                    <div class="relative">
+                                        <i data-lucide="at-sign" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                        <input type="text" id="id_username" name="username"
+                                            value="{{ form.username.value|default_if_none:'' }}"
+                                            placeholder="Choose a unique username" required autocomplete="username"
+                                            class="w-full h-11 pl-10 pr-4 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                    </div>
+                                    {% if form.username.errors %}<p class="text-xs text-red-400 mt-1.5 flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i>{{ form.username.errors.0 }}</p>{% endif %}
+                                </div>
+
+                                <!-- Email -->
+                                <div>
+                                    <label for="id_email" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Email Address <span class="text-red-400">*</span></label>
+                                    <div class="relative">
+                                        <i data-lucide="mail" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                        <input type="email" id="id_email" name="email"
+                                            value="{{ form.email.value|default_if_none:'' }}"
+                                            placeholder="you@company.com" required autocomplete="email"
+                                            class="w-full h-11 pl-10 pr-4 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                    </div>
+                                    {% if form.email.errors %}<p class="text-xs text-red-400 mt-1.5 flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i>{{ form.email.errors.0 }}</p>{% endif %}
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Section divider -->
+                        <div class="h-px bg-gradient-to-r from-transparent via-card-border to-transparent"></div>
+
+                        <!-- ══════════ SECTION 2: Work & Identity ══════════ -->
+                        <section class="stagger-3">
+                            <div class="flex items-center gap-2.5 mb-4">
+                                <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-violet-500/10 border border-violet-500/15">
+                                    <i data-lucide="briefcase" class="w-3.5 h-3.5 text-violet-400"></i>
+                                </div>
+                                <h2 class="font-bold text-slate-200 uppercase" style="letter-spacing: 0.06em; font-size: 11px;">Work & Identity</h2>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Role Toggle -->
+                                <div>
+                                    <label class="block text-[13px] font-semibold text-slate-300 mb-2">Role <span class="text-red-400">*</span></label>
+                                    <div class="relative inline-flex items-center bg-slate-900/80 border border-slate-700/60 rounded-xl p-1 w-full sm:w-auto" id="role-toggle-container">
+                                        <div id="role-slider" class="role-slider absolute top-1 bottom-1 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/25" style="left: 4px; width: calc(50% - 4px);"></div>
+                                        <button type="button" id="role-employee-btn"
+                                            class="relative z-10 flex items-center justify-center gap-2 flex-1 sm:px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 text-white"
+                                            onclick="selectRole('EMPLOYEE')">
+                                            <i data-lucide="user-check" class="w-4 h-4"></i>
+                                            Employee
+                                        </button>
+                                        <button type="button" id="role-admin-btn"
+                                            class="relative z-10 flex items-center justify-center gap-2 flex-1 sm:px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 text-slate-400"
+                                            onclick="selectRole('ADMIN')">
+                                            <i data-lucide="shield" class="w-4 h-4"></i>
+                                            Admin
+                                        </button>
+                                        <input type="hidden" name="role" id="id_role" value="{{ form.role.value|default:'EMPLOYEE' }}">
+                                    </div>
+                                    {% if form.role.errors %}<p class="text-xs text-red-400 mt-1.5 flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i>{{ form.role.errors.0 }}</p>{% endif %}
+                                </div>
+
+                                <!-- Department & Designation -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="id_department" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Department</label>
+                                        <div class="relative">
+                                            <i data-lucide="building-2" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                            <input type="text" id="id_department" name="department"
+                                                value="{{ form.department.value|default_if_none:'' }}"
+                                                placeholder="e.g. IT, HR, Marketing"
+                                                class="w-full h-11 pl-10 pr-4 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="id_designation" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Designation</label>
+                                        <div class="relative">
+                                            <i data-lucide="badge" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                            <input type="text" id="id_designation" name="designation"
+                                                value="{{ form.designation.value|default_if_none:'' }}"
+                                                placeholder="e.g. Software Engineer"
+                                                class="w-full h-11 pl-10 pr-4 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Date of Joining & Gender -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="id_date_of_joining" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Date of Joining</label>
+                                        <div class="relative">
+                                            <i data-lucide="calendar" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                            <input type="date" id="id_date_of_joining" name="date_of_joining"
+                                                value="{{ form.date_of_joining.value|default_if_none:'' }}"
+                                                class="w-full h-11 pl-10 pr-4 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="id_gender" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Gender</label>
+                                        <div class="relative">
+                                            <i data-lucide="users" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none z-10"></i>
+                                            <select id="id_gender" name="gender"
+                                                class="w-full h-11 pl-10 pr-10 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80 cursor-pointer">
+                                                <option value="" class="bg-slate-800" {% if not form.gender.value %}selected{% endif %}>Select gender</option>
+                                                <option value="MALE" class="bg-slate-800" {% if form.gender.value == 'MALE' %}selected{% endif %}>Male</option>
+                                                <option value="FEMALE" class="bg-slate-800" {% if form.gender.value == 'FEMALE' %}selected{% endif %}>Female</option>
+                                                <option value="OTHER" class="bg-slate-800" {% if form.gender.value == 'OTHER' %}selected{% endif %}>Other</option>
+                                            </select>
+                                            <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Phone Number -->
+                                <div>
+                                    <label for="id_phone" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Phone Number</label>
+                                    <div class="relative">
+                                        <i data-lucide="phone" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                        <input type="tel" id="id_phone" name="phone"
+                                            value="{{ form.phone.value|default_if_none:'' }}"
+                                            placeholder="+91 98765 43210"
+                                            class="w-full h-11 pl-10 pr-4 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Section divider -->
+                        <div class="h-px bg-gradient-to-r from-transparent via-card-border to-transparent"></div>
+
+                        <!-- ══════════ SECTION 3: Security & Profile ══════════ -->
+                        <section class="stagger-4">
+                            <div class="flex items-center gap-2.5 mb-4">
+                                <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/15">
+                                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                </div>
+                                <h2 class="font-bold text-slate-200 uppercase" style="letter-spacing: 0.06em; font-size: 11px;">Security & Profile</h2>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Password & Confirm Password -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="id_password1" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Password <span class="text-red-400">*</span></label>
+                                        <div class="relative">
+                                            <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                            <input type="password" id="id_password1" name="password1"
+                                                placeholder="Create a strong password" required autocomplete="new-password"
+                                                class="w-full h-11 pl-10 pr-11 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                            <button type="button" class="pw-toggle-btn absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-500 hover:text-slate-300 hover:bg-slate-700/50 transition-all duration-200" onclick="togglePassword('id_password1', this)" aria-label="Toggle password visibility">
+                                                <i data-lucide="eye" class="w-4 h-4 icon-eye"></i>
+                                                <i data-lucide="eye-off" class="w-4 h-4 icon-eye-off hidden"></i>
+                                            </button>
+                                        </div>
+                                        {% if form.password1.errors %}<p class="text-xs text-red-400 mt-1.5 flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i>{{ form.password1.errors.0 }}</p>{% endif %}
+                                    </div>
+                                    <div>
+                                        <label for="id_password2" class="block text-[13px] font-semibold text-slate-300 mb-1.5">Confirm Password <span class="text-red-400">*</span></label>
+                                        <div class="relative">
+                                            <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-[15px] h-[15px] text-slate-500 pointer-events-none"></i>
+                                            <input type="password" id="id_password2" name="password2"
+                                                placeholder="Confirm your password" required autocomplete="new-password"
+                                                class="w-full h-11 pl-10 pr-11 bg-slate-900/60 border border-slate-700/60 rounded-xl text-sm text-white placeholder-slate-500 outline-none transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-slate-900/80">
+                                            <button type="button" class="pw-toggle-btn absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-500 hover:text-slate-300 hover:bg-slate-700/50 transition-all duration-200" onclick="togglePassword('id_password2', this)" aria-label="Toggle password visibility">
+                                                <i data-lucide="eye" class="w-4 h-4 icon-eye"></i>
+                                                <i data-lucide="eye-off" class="w-4 h-4 icon-eye-off hidden"></i>
+                                            </button>
+                                        </div>
+                                        {% if form.password2.errors %}<p class="text-xs text-red-400 mt-1.5 flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i>{{ form.password2.errors.0 }}</p>{% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Password strength indicator -->
+                                <div id="pw-strength-container" class="hidden">
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex-1 h-1 rounded-full bg-slate-800 overflow-hidden">
+                                            <div id="pw-strength-bar" class="h-full rounded-full transition-all duration-500 ease-out" style="width: 0%;"></div>
+                                        </div>
+                                        <span id="pw-strength-text" class="text-[11px] font-semibold"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Profile Picture Upload -->
+                                <div>
+                                    <label class="block text-[13px] font-semibold text-slate-300 mb-1.5">Profile Picture</label>
+                                    <div id="upload-zone" class="upload-zone relative border-2 border-dashed border-slate-700/60 rounded-xl p-5 text-center cursor-pointer hover:border-indigo-500/60 hover:bg-indigo-500/[0.03] transition-all duration-250 group" onclick="document.getElementById('id_profile_pic').click()">
+                                        <input type="file" id="id_profile_pic" name="profile_pic" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
+
+                                        <!-- Default state -->
+                                        <div id="upload-placeholder" class="flex flex-col items-center gap-2.5">
+                                            <div class="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700/50 flex items-center justify-center group-hover:border-indigo-500/30 group-hover:bg-indigo-500/10 transition-all duration-250">
+                                                <i data-lucide="camera" class="w-5 h-5 text-slate-500 group-hover:text-indigo-400 transition-colors duration-250"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-slate-400">
+                                                    <span class="text-indigo-400 font-semibold">Click to upload</span> or drag and drop
+                                                </p>
+                                                <p class="text-xs text-slate-600 mt-1">PNG, JPG, GIF up to 5MB</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- File selected state -->
+                                        <div id="upload-preview" class="hidden flex items-center gap-4">
+                                            <div class="relative flex-shrink-0">
+                                                <img id="preview-image" src="" alt="Preview" class="w-14 h-14 rounded-xl object-cover border-2 border-indigo-500/40 shadow-lg shadow-indigo-500/10">
+                                                <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-card">
+                                                    <i data-lucide="check" class="w-3 h-3 text-white"></i>
+                                                </div>
+                                            </div>
+                                            <div class="text-left flex-1 min-w-0">
+                                                <p id="file-name" class="text-sm font-semibold text-white truncate"></p>
+                                                <p id="file-size" class="text-xs text-slate-500 mt-0.5"></p>
+                                            </div>
+                                            <button type="button" id="remove-file-btn" class="flex-shrink-0 p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200" onclick="event.stopPropagation(); removeFile();">
+                                                <i data-lucide="x" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ══════════ SUBMIT BUTTON ══════════ -->
+                        <div class="stagger-4 pt-2">
+                            <button type="submit" id="submit-btn"
+                                class="relative w-full h-12 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold text-[15px] rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 active:shadow-md transition-all duration-200 flex items-center justify-center gap-2.5 overflow-hidden group">
+                                <!-- Shimmer overlay -->
+                                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
+                                <!-- Spinner (hidden) -->
+                                <span id="submit-spinner" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                <!-- Label -->
+                                <span id="submit-label" class="relative z-10 flex items-center gap-2">
+                                    <i data-lucide="user-plus" class="w-[18px] h-[18px]"></i>
+                                    Create Account
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- ══════════ FOOTER LINKS ══════════ -->
+                        <div class="stagger-4 text-center space-y-4">
+                            <p class="text-sm text-slate-400">
+                                Already have an account?&nbsp;
+                                <a href="{% url 'login' %}" class="text-indigo-400 font-semibold hover:text-indigo-300 transition-colors duration-200 relative group" id="signin-link">
+                                    Sign In
+                                    <span class="absolute bottom-[-2px] left-0 w-0 h-[1.5px] bg-indigo-400 group-hover:w-full transition-all duration-300 ease-out"></span>
+                                </a>
+                            </p>
+
+                            <!-- SSL Badge -->
+                            <div class="flex items-center justify-center gap-1.5 text-[11px] text-slate-600 pt-1">
+                                <i data-lucide="lock" class="w-3 h-3"></i>
+                                <span>256-bit SSL encrypted · Your data is secure</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+    <script>
+    (function() {
+        'use strict';
+
+        // Initialize Lucide icons
+        if (window.lucide) lucide.createIcons();
+
+        /* ── Role Toggle ─────────────────────────────────────── */
+        var roleInput   = document.getElementById('id_role');
+        var slider      = document.getElementById('role-slider');
+        var employeeBtn = document.getElementById('role-employee-btn');
+        var adminBtn    = document.getElementById('role-admin-btn');
+
+        window.selectRole = function(role) {
+            roleInput.value = role;
+            if (role === 'EMPLOYEE') {
+                slider.style.left  = '4px';
+                slider.style.width = 'calc(50% - 4px)';
+                employeeBtn.className = employeeBtn.className.replace('text-slate-400', 'text-white');
+                if (adminBtn.className.indexOf('text-slate-400') === -1) {
+                    adminBtn.className = adminBtn.className.replace('text-white', 'text-slate-400');
+                }
+            } else {
+                slider.style.left  = 'calc(50%)';
+                slider.style.width = 'calc(50% - 4px)';
+                adminBtn.className = adminBtn.className.replace('text-slate-400', 'text-white');
+                if (employeeBtn.className.indexOf('text-slate-400') === -1) {
+                    employeeBtn.className = employeeBtn.className.replace('text-white', 'text-slate-400');
+                }
+            }
+        };
+
+        // Restore role state from Django form on page load
+        if (roleInput.value === 'ADMIN') {
+            selectRole('ADMIN');
+        } else {
+            selectRole('EMPLOYEE');
+        }
+
+        /* ── Password Show/Hide Toggle ───────────────────────── */
+        window.togglePassword = function(inputId, btn) {
+            var input      = document.getElementById(inputId);
+            var iconEye    = btn.querySelector('.icon-eye');
+            var iconEyeOff = btn.querySelector('.icon-eye-off');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconEye.classList.add('hidden');
+                iconEyeOff.classList.remove('hidden');
+                btn.setAttribute('aria-label', 'Hide password');
+            } else {
+                input.type = 'password';
+                iconEye.classList.remove('hidden');
+                iconEyeOff.classList.add('hidden');
+                btn.setAttribute('aria-label', 'Show password');
+            }
+        };
+
+        /* ── Password Strength Meter ─────────────────────────── */
+        var pw1Input          = document.getElementById('id_password1');
+        var strengthContainer = document.getElementById('pw-strength-container');
+        var strengthBar       = document.getElementById('pw-strength-bar');
+        var strengthText      = document.getElementById('pw-strength-text');
+
+        function checkStrength(password) {
+            var score = 0;
+            if (password.length >= 8)  score++;
+            if (password.length >= 12) score++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+            if (/[0-9]/.test(password))    score++;
+            if (/[^a-zA-Z0-9]/.test(password)) score++;
+            return score;
+        }
+
+        if (pw1Input) {
+            pw1Input.addEventListener('input', function() {
+                var val = this.value;
+                if (val.length === 0) {
+                    strengthContainer.classList.add('hidden');
+                    return;
+                }
+                strengthContainer.classList.remove('hidden');
+                var score = checkStrength(val);
+                var levels = [
+                    { w: '10%', color: '#ef4444', label: 'Very Weak', tc: '#ef4444' },
+                    { w: '25%', color: '#f97316', label: 'Weak',      tc: '#f97316' },
+                    { w: '50%', color: '#eab308', label: 'Fair',      tc: '#eab308' },
+                    { w: '75%', color: '#22c55e', label: 'Strong',    tc: '#22c55e' },
+                    { w: '100%',color: '#10b981', label: 'Excellent', tc: '#10b981' },
+                ];
+                var lvl = Math.min(score, 4);
+                strengthBar.style.width           = levels[lvl].w;
+                strengthBar.style.backgroundColor  = levels[lvl].color;
+                strengthText.textContent           = levels[lvl].label;
+                strengthText.style.color           = levels[lvl].tc;
+            });
+        }
+
+        /* ── Profile Picture Upload & Preview ────────────────── */
+        var uploadZone  = document.getElementById('upload-zone');
+        var placeholder = document.getElementById('upload-placeholder');
+        var previewDiv  = document.getElementById('upload-preview');
+        var previewImg  = document.getElementById('preview-image');
+        var fileNameEl  = document.getElementById('file-name');
+        var fileSizeEl  = document.getElementById('file-size');
+        var fileInput   = document.getElementById('id_profile_pic');
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            var k = 1024;
+            var sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            var i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        window.handleFileSelect = function(input) {
+            var file = input.files[0];
+            if (!file) return;
+
+            fileNameEl.textContent = file.name;
+            fileSizeEl.textContent = formatBytes(file.size);
+
+            if (file.type.startsWith('image/')) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    placeholder.classList.add('hidden');
+                    previewDiv.classList.remove('hidden');
+                    uploadZone.classList.add('has-file');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                placeholder.classList.add('hidden');
+                previewDiv.classList.remove('hidden');
+                previewImg.src = '';
+                uploadZone.classList.add('has-file');
+            }
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.removeFile = function() {
+            fileInput.value = '';
+            placeholder.classList.remove('hidden');
+            previewDiv.classList.add('hidden');
+            uploadZone.classList.remove('has-file');
+            previewImg.src = '';
+        };
+
+        // Drag-and-drop support
+        if (uploadZone) {
+            ['dragenter', 'dragover'].forEach(function(evt) {
+                uploadZone.addEventListener(evt, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.add('drag-over');
+                });
+            });
+            ['dragleave', 'drop'].forEach(function(evt) {
+                uploadZone.addEventListener(evt, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.remove('drag-over');
+                });
+            });
+            uploadZone.addEventListener('drop', function(e) {
+                var files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelect(fileInput);
+                }
+            });
+        }
+
+        /* ── Form Submit Loading State ───────────────────────── */
+        var form          = document.getElementById('register-form');
+        var submitBtn     = document.getElementById('submit-btn');
+        var submitLabel   = document.getElementById('submit-label');
+        var submitSpinner = document.getElementById('submit-spinner');
+
+        if (form && submitBtn) {
+            form.addEventListener('submit', function() {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-80', 'pointer-events-none');
+                submitLabel.classList.add('hidden');
+                submitSpinner.classList.remove('hidden');
+            });
+        }
+
+        /* ── Focus ring: input icon color change ─────────────── */
+        document.querySelectorAll('input, select').forEach(function(el) {
+            var wrapper = el.closest('.relative');
+            if (!wrapper) return;
+            var icons = wrapper.querySelectorAll(':scope > [data-lucide]');
+            if (icons.length === 0) return;
+            var icon = icons[0];
+            if (icon.closest('button')) return;
+
+            el.addEventListener('focus', function() {
+                icon.classList.remove('text-slate-500');
+                icon.classList.add('text-indigo-400');
+            });
+            el.addEventListener('blur', function() {
+                icon.classList.remove('text-indigo-400');
+                icon.classList.add('text-slate-500');
+            });
+        });
+
+    })();
+    </script>
+</body>
+</html>

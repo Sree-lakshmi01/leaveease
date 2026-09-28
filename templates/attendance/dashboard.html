@@ -1,0 +1,585 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance & Availability Analyzer - LeaveEase{% endblock %}
+{% block page_title %}Attendance Analyzer{% endblock %}
+
+{% block extra_head %}
+<style>
+    .pulse-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #10b981;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+        }
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+    }
+    
+    .status-badge-present {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+    .status-badge-halfday {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+    .status-badge-absent {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .live-clock {
+        font-family: 'Inter', monospace;
+        letter-spacing: 0.05em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Hero & Security Badge -->
+<div class="row mb-4 animate-fade-in">
+    <div class="col-12">
+        <div class="glass-card p-4 position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%), var(--bg-card);">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 position-relative style-z10">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; border-radius: 20px;">
+                            <i class="fa-solid fa-shield-halved me-1"></i> 256-Bit SSL Encrypted Verification
+                        </span>
+                        <span class="text-secondary small"><i class="fa-solid fa-clock me-1 text-primary"></i>Standard Shift: 9:00 AM – 6:00 PM (9.0 Hrs)</span>
+                    </div>
+                    <h3 class="text-white m-0 font-heading fw-bold">Attendance & Availability Analyzer</h3>
+                    <p class="text-secondary m-0 mt-1 style-sub-text">Track daily work hours, present status, and real-time team availability.</p>
+                </div>
+                
+                <!-- Live Clock & Punch Console Card -->
+                <div class="glass-card p-3 d-flex align-items-center gap-3 style-punch-box" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="text-center px-2">
+                        <div class="live-clock text-white fs-4 fw-bold" id="liveClockDisplay">--:--:-- --</div>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;" id="liveDateDisplay">{{ today_date_str }}</small>
+                    </div>
+                    <div class="vr bg-secondary opacity-25" style="height: 40px;"></div>
+                    <div class="d-flex gap-2" id="punchButtonsContainer">
+                        <button type="button" class="btn btn-gradient-primary btn-sm px-3 py-2 fw-semibold d-flex align-items-center gap-2" id="btnCheckIn" {% if is_checked_in %}disabled{% endif %}>
+                            <i class="fa-solid fa-right-to-bracket"></i>
+                            <span id="checkInText">{% if is_checked_in %}Checked In ({{ today_att.check_in|time:"h:i A" }}){% else %}Check In{% endif %}</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2 fw-semibold d-flex align-items-center gap-2 style-btn-out" id="btnCheckOut" {% if not is_checked_in or is_checked_out %}disabled{% endif %}>
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span id="checkOutText">{% if is_checked_out %}Checked Out ({{ today_att.check_out|time:"h:i A" }}){% else %}Check Out{% endif %}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metrics Row (3 Styled Summary Cards) -->
+<div class="row g-4 mb-4 animate-fade-in">
+    <!-- Metric 1: Present Days (This Month) -->
+    <div class="col-md-4 col-sm-6">
+        <div class="glass-card p-4 d-flex justify-content-between align-items-center h-100">
+            <div>
+                <span class="text-secondary d-block mb-1 style-card-title">Present Days (This Month)</span>
+                <h2 class="text-white m-0 font-heading fw-bold" id="metricPresentDays">{{ present_days_count }} <span class="fs-6 fw-normal text-muted">Days</span></h2>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <span class="badge bg-success-subtle text-success style-card-badge"><i class="fa-solid fa-check me-1"></i>Active Record</span>
+                    <small class="text-muted style-sub-count">{{ half_days_count }} Half-Days • {{ absent_days_count }} Absent</small>
+                </div>
+            </div>
+            <div class="quick-action-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric 2: Average Hours / Day -->
+    <div class="col-md-4 col-sm-6">
+        <div class="glass-card p-4 d-flex justify-content-between align-items-center h-100">
+            <div>
+                <span class="text-secondary d-block mb-1 style-card-title">Average Hours/Day</span>
+                <h2 class="text-white m-0 font-heading fw-bold" id="metricAvgHours">{{ avg_daily_hours }} <span class="fs-6 fw-normal text-muted">Hrs/Day</span></h2>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    <span class="badge bg-info-subtle text-info style-card-badge"><i class="fa-solid fa-bullseye me-1"></i>Target: 8.0h</span>
+                    <small class="text-muted style-sub-count">Standard 9-6 Shift</small>
+                </div>
+            </div>
+            <div class="quick-action-icon" style="background: rgba(99, 102, 241, 0.15); color: #6366f1; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                <i class="fa-solid fa-stopwatch"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric 3: Total Overtime / Deficit Hours -->
+    <div class="col-md-4 col-sm-12">
+        <div class="glass-card p-4 d-flex justify-content-between align-items-center h-100">
+            <div>
+                <span class="text-secondary d-block mb-1 style-card-title">Total Overtime/Deficit Hours</span>
+                <h2 class="text-white m-0 font-heading fw-bold" id="metricOvertime">
+                    {% if overtime_deficit_val >= 0 %}+{{ overtime_deficit_val }}{% else %}{{ overtime_deficit_val }}{% endif %} <span class="fs-6 fw-normal text-muted">Hrs</span>
+                </h2>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    {% if overtime_deficit_val >= 0 %}
+                        <span class="badge bg-success-subtle text-success style-card-badge"><i class="fa-solid fa-arrow-up me-1"></i>Surplus</span>
+                    {% else %}
+                        <span class="badge bg-warning-subtle text-warning style-card-badge"><i class="fa-solid fa-arrow-down me-1"></i>Deficit</span>
+                    {% endif %}
+                    <small class="text-muted style-sub-count">Cumulative Balance</small>
+                </div>
+            </div>
+            <div class="quick-action-icon" style="background: rgba(168, 85, 247, 0.15); color: #a855f7; width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid: Daily Log Table + Live Availability Widget -->
+<div class="row animate-fade-in">
+    <!-- Left Column (8 Cols): Daily Log Component -->
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card p-4 h-100">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+                <div>
+                    <h5 class="text-white m-0 font-heading"><i class="fa-solid fa-table-list me-2 text-primary"></i>Daily Log Component</h5>
+                    <small class="text-muted">Attendance history for {{ current_month_name }}</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="input-group input-group-sm glass-input" style="width: 200px;">
+                        <span class="input-group-text bg-transparent border-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" id="logSearchInput" class="form-control bg-transparent border-0 text-white" placeholder="Filter log..." style="font-size: 0.8rem;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table custom-table responsive-card-table" id="dailyLogTable">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Check-In</th>
+                            <th scope="col">Check-Out</th>
+                            <th scope="col">Total Hours</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyLogTbody">
+                        {% for att in attendances %}
+                        <tr data-date="{{ att.date|date:'Y-m-d' }}">
+                            <td data-label="Date:">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-regular fa-calendar text-muted"></i>
+                                    <div>
+                                        <span class="fw-semibold text-white d-block" style="font-size: 0.88rem;">{{ att.date|date:"M d, Y" }}</span>
+                                        <small class="text-secondary" style="font-size: 0.75rem;">{{ att.date|date:"l" }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td data-label="Check-In:">
+                                {% if att.check_in %}
+                                    <span class="text-white fw-medium"><i class="fa-solid fa-arrow-right-to-bracket me-1 text-success style-icon-sm"></i>{{ att.check_in|time:"h:i A" }}</span>
+                                {% else %}
+                                    <span class="text-muted style-dash-text">—</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Check-Out:">
+                                {% if att.check_out %}
+                                    <span class="text-white fw-medium"><i class="fa-solid fa-arrow-right-from-bracket me-1 text-danger style-icon-sm"></i>{{ att.check_out|time:"h:i A" }}</span>
+                                {% elif att.check_in %}
+                                    <span class="badge bg-primary-subtle text-primary"><i class="fa-solid fa-spinner fa-spin me-1"></i>Active Shift</span>
+                                {% else %}
+                                    <span class="text-muted style-dash-text">—</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Total Hours:">
+                                {% if att.total_hours > 0 %}
+                                    <span class="fw-bold text-white">{{ att.total_hours }} hrs</span>
+                                {% elif att.check_in and not att.check_out %}
+                                    <span class="text-info small fw-medium">In Progress</span>
+                                {% else %}
+                                    <span class="text-muted style-dash-text">0.00 hrs</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Status:">
+                                {% if att.status == 'PRESENT' %}
+                                    <span class="status-badge-present"><i class="fa-solid fa-circle-check me-1"></i>Present</span>
+                                {% elif att.status == 'HALF_DAY' %}
+                                    <span class="status-badge-halfday"><i class="fa-solid fa-clock me-1"></i>Half-Day</span>
+                                {% else %}
+                                    <span class="status-badge-absent"><i class="fa-solid fa-circle-xmark me-1"></i>Absent</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr id="emptyLogMsg">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="fa-solid fa-calendar-xmark d-block mb-2 text-secondary" style="font-size: 1.8rem;"></i>
+                                No attendance logs recorded for this month yet. Use the <strong>Check In</strong> button above to start your shift!
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column (4 Cols): Live Availability Widget -->
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-white m-0 font-heading"><i class="fa-solid fa-signal me-2 text-success"></i>Live Availability</h5>
+                <span class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1">
+                    <span class="pulse-indicator"></span>
+                    <span id="activeCountBadge">{{ active_count }} Active</span>
+                </span>
+            </div>
+
+            <p class="text-secondary small mb-3">Currently active employees checked in today but not yet checked out.</p>
+
+            <div class="d-flex flex-column gap-3 mb-4" id="liveAvailabilityList" style="max-height: 380px; overflow-y: auto;">
+                {% for active in active_employees_att %}
+                <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 style-active-row" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <div class="position-relative">
+                            {% if active.user.profile_pic %}
+                                <img src="{{ active.user.profile_pic.url }}" alt="{{ active.user.username }}" class="rounded-circle" style="width: 38px; height: 38px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px; font-size: 0.9rem;">
+                                    {{ active.user.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                            <span class="position-absolute bottom-0 end-0 bg-success border border-dark rounded-circle" style="width: 10px; height: 10px;"></span>
+                        </div>
+                        <div>
+                            <span class="text-white fw-semibold d-block style-active-name" style="font-size: 0.85rem;">{{ active.user.get_full_name|default:active.user.username }}</span>
+                            <small class="text-muted" style="font-size: 0.74rem;">{{ active.user.department|default:"Engineering" }}</small>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.72rem;">In: {{ active.check_in|time:"h:i A" }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4" id="emptyActiveWidget">
+                    <i class="fa-solid fa-users-slash d-block mb-2 text-secondary" style="font-size: 1.5rem;"></i>
+                    <small>No active employees checked in right now.</small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Summary Stats Footer inside Widget -->
+            <div class="p-3 rounded-3 mt-auto style-widget-footer" style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border-color);">
+                <div class="row text-center g-2">
+                    <div class="col-4 border-end border-secondary border-opacity-25">
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">ACTIVE</small>
+                        <span class="fw-bold text-success" id="widgetActiveVal">{{ active_count }}</span>
+                    </div>
+                    <div class="col-4 border-end border-secondary border-opacity-25">
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">COMPLETED</small>
+                        <span class="fw-bold text-white" id="widgetOutVal">{{ checked_out_count }}</span>
+                    </div>
+                    <div class="col-4">
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">TOTAL STAFF</small>
+                        <span class="fw-bold text-info">{{ total_employees_count }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Start Live Clock
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Bind AJAX Check-In / Check-Out
+        const btnCheckIn = document.getElementById('btnCheckIn');
+        const btnCheckOut = document.getElementById('btnCheckOut');
+
+        if (btnCheckIn) {
+            btnCheckIn.addEventListener('click', handleCheckIn);
+        }
+        if (btnCheckOut) {
+            btnCheckOut.addEventListener('click', handleCheckOut);
+        }
+
+        // Daily Log Filter Search
+        const searchInput = document.getElementById('logSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', (e) => {
+                const query = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#dailyLogTbody tr:not(#emptyLogMsg)');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
+            });
+        }
+    });
+
+    function updateClock() {
+        const now = new Date();
+        const clockEl = document.getElementById('liveClockDisplay');
+        if (clockEl) {
+            clockEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }
+    }
+
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === ('csrftoken=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // AJAX Check-In Handler
+    function handleCheckIn() {
+        const btnIn = document.getElementById('btnCheckIn');
+        const btnOut = document.getElementById('btnCheckOut');
+        const checkInText = document.getElementById('checkInText');
+
+        btnIn.disabled = true;
+        btnIn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i> Checking In...`;
+
+        fetch('{% url "api_check_in" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                btnIn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Checked In (${data.check_in})</span>`;
+                btnIn.disabled = true;
+
+                if (btnOut) {
+                    btnOut.disabled = false;
+                }
+
+                // Add or update row in Daily Log Table dynamically
+                updateOrPrependLogRow(data.date, data.check_in, '—', 'In Progress', 'Present');
+                
+                // Refresh availability widget
+                refreshMetrics();
+            } else {
+                showToast(data.message, 'danger');
+                btnIn.disabled = false;
+                btnIn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Check In</span>`;
+            }
+        })
+        .catch(err => {
+            console.error('Check in failed:', err);
+            showToast('Failed to complete check in. Please try again.', 'danger');
+            btnIn.disabled = false;
+            btnIn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Check In</span>`;
+        });
+    }
+
+    // AJAX Check-Out Handler
+    function handleCheckOut() {
+        const btnOut = document.getElementById('btnCheckOut');
+        const checkOutText = document.getElementById('checkOutText');
+
+        btnOut.disabled = true;
+        btnOut.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i> Checking Out...`;
+
+        fetch('{% url "api_check_out" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                btnOut.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> <span>Checked Out (${data.check_out})</span>`;
+                btnOut.disabled = true;
+
+                // Update metrics cards dynamically
+                if (data.metrics) {
+                    const elPresent = document.getElementById('metricPresentDays');
+                    const elAvg = document.getElementById('metricAvgHours');
+                    const elOvertime = document.getElementById('metricOvertime');
+
+                    if (elPresent) elPresent.innerHTML = `${data.metrics.present_days} <span class="fs-6 fw-normal text-muted">Days</span>`;
+                    if (elAvg) elAvg.innerHTML = `${data.metrics.avg_hours} <span class="fs-6 fw-normal text-muted">Hrs/Day</span>`;
+                    if (elOvertime) {
+                        const val = data.metrics.overtime_deficit;
+                        const prefix = val >= 0 ? '+' : '';
+                        elOvertime.innerHTML = `${prefix}${val} <span class="fs-6 fw-normal text-muted">Hrs</span>`;
+                    }
+                }
+
+                // Update Daily Log table row
+                updateRowOnCheckOut(data.check_out, data.total_hours, data.status_display);
+                
+                // Refresh metrics & active count
+                refreshMetrics();
+            } else {
+                showToast(data.message, 'danger');
+                btnOut.disabled = false;
+                btnOut.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> <span>Check Out</span>`;
+            }
+        })
+        .catch(err => {
+            console.error('Check out failed:', err);
+            showToast('Failed to complete check out. Please try again.', 'danger');
+            btnOut.disabled = false;
+            btnOut.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> <span>Check Out</span>`;
+        });
+    }
+
+    function updateOrPrependLogRow(dateStr, checkInStr, checkOutStr, hoursStr, statusStr) {
+        const tbody = document.getElementById('dailyLogTbody');
+        const emptyMsg = document.getElementById('emptyLogMsg');
+        if (emptyMsg) emptyMsg.remove();
+
+        const todayRow = tbody.querySelector('tr[data-date]');
+        const nowStr = new Date().toISOString().split('T')[0];
+        
+        let badgeHtml = `<span class="status-badge-present"><i class="fa-solid fa-circle-check me-1"></i>Present</span>`;
+
+        if (todayRow && todayRow.getAttribute('data-date') === nowStr) {
+            todayRow.cells[1].innerHTML = `<span class="text-white fw-medium"><i class="fa-solid fa-arrow-right-to-bracket me-1 text-success style-icon-sm"></i>${checkInStr}</span>`;
+            todayRow.cells[2].innerHTML = `<span class="badge bg-primary-subtle text-primary"><i class="fa-solid fa-spinner fa-spin me-1"></i>Active Shift</span>`;
+            todayRow.cells[3].innerHTML = `<span class="text-info small fw-medium">In Progress</span>`;
+            todayRow.cells[4].innerHTML = badgeHtml;
+        } else {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-date', nowStr);
+            tr.innerHTML = `
+                <td data-label="Date:">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-regular fa-calendar text-muted"></i>
+                        <div>
+                            <span class="fw-semibold text-white d-block" style="font-size: 0.88rem;">${dateStr}</span>
+                            <small class="text-secondary" style="font-size: 0.75rem;">Today</small>
+                        </div>
+                    </div>
+                </td>
+                <td data-label="Check-In:">
+                    <span class="text-white fw-medium"><i class="fa-solid fa-arrow-right-to-bracket me-1 text-success style-icon-sm"></i>${checkInStr}</span>
+                </td>
+                <td data-label="Check-Out:">
+                    <span class="badge bg-primary-subtle text-primary"><i class="fa-solid fa-spinner fa-spin me-1"></i>Active Shift</span>
+                </td>
+                <td data-label="Total Hours:">
+                    <span class="text-info small fw-medium">In Progress</span>
+                </td>
+                <td data-label="Status:">
+                    ${badgeHtml}
+                </td>
+            `;
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+    }
+
+    function updateRowOnCheckOut(checkOutStr, hoursStr, statusDisplay) {
+        const tbody = document.getElementById('dailyLogTbody');
+        const nowStr = new Date().toISOString().split('T')[0];
+        const row = tbody.querySelector(`tr[data-date="${nowStr}"]`);
+        
+        let statusBadgeHtml = `<span class="status-badge-present"><i class="fa-solid fa-circle-check me-1"></i>${statusDisplay}</span>`;
+        if (statusDisplay.toLowerCase().includes('half')) {
+            statusBadgeHtml = `<span class="status-badge-halfday"><i class="fa-solid fa-clock me-1"></i>${statusDisplay}</span>`;
+        } else if (statusDisplay.toLowerCase().includes('absent')) {
+            statusBadgeHtml = `<span class="status-badge-absent"><i class="fa-solid fa-circle-xmark me-1"></i>${statusDisplay}</span>`;
+        }
+
+        if (row) {
+            row.cells[2].innerHTML = `<span class="text-white fw-medium"><i class="fa-solid fa-arrow-right-from-bracket me-1 text-danger style-icon-sm"></i>${checkOutStr}</span>`;
+            row.cells[3].innerHTML = `<span class="fw-bold text-white">${hoursStr} hrs</span>`;
+            row.cells[4].innerHTML = statusBadgeHtml;
+        }
+    }
+
+    function refreshMetrics() {
+        fetch('{% url "api_attendance_metrics" %}', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const activeBadge = document.getElementById('activeCountBadge');
+                const widgetActive = document.getElementById('widgetActiveVal');
+                if (activeBadge) activeBadge.textContent = `${data.active_count} Active`;
+                if (widgetActive) widgetActive.textContent = data.active_count;
+            }
+        })
+        .catch(err => console.error('Failed to refresh metrics:', err));
+    }
+
+    function showToast(message, type = 'info') {
+        let container = document.querySelector('.dashboard-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'dashboard-toast-container';
+            document.body.appendChild(container);
+        }
+        
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show glass-card mb-2 style-toast-item`;
+        toast.innerHTML = `
+            <i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 4500);
+    }
+</script>
+{% endblock %}

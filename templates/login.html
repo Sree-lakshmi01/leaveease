@@ -1,0 +1,139 @@
+{% extends 'auth_base.html' %}
+
+{% block title %}Sign In — LeaveEase{% endblock %}
+
+{% block content %}
+<form
+    method="post"
+    action="{% url 'login' %}"
+    class="auth-form"
+    id="login-form"
+    novalidate
+    aria-label="Sign in form"
+>
+    {% csrf_token %}
+
+    <!-- ── Username ──────────────────────────────────────────── -->
+    <div class="form-group">
+        <label class="form-label" for="id_username">Username</label>
+        <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+                <!-- User icon -->
+                <svg viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </span>
+            <input
+                type="text"
+                id="id_username"
+                name="username"
+                class="auth-input"
+                placeholder="Enter your username"
+                autocomplete="username"
+                autofocus
+                required
+                aria-required="true"
+                aria-describedby="username-hint"
+            >
+        </div>
+    </div>
+
+    <!-- ── Password ──────────────────────────────────────────── -->
+    <div class="form-group">
+        <div class="label-row">
+            <label class="form-label" for="id_password">Password</label>
+            <a href="#" class="forgot-link" id="forgot-link">Forgot password?</a>
+        </div>
+        <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+                <!-- Lock icon -->
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </span>
+            <input
+                type="password"
+                id="id_password"
+                name="password"
+                class="auth-input has-toggle"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+                aria-required="true"
+            >
+            <!-- Show/hide toggle -->
+            <button
+                type="button"
+                class="pw-toggle"
+                id="pw-toggle"
+                aria-label="Toggle password visibility"
+                aria-pressed="false"
+            >
+                <!-- Eye icon (shown when password is hidden) -->
+                <svg id="icon-eye" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <!-- Eye-off icon (shown when password is visible) -->
+                <svg id="icon-eye-off" viewBox="0 0 24 24" aria-hidden="true" style="display:none;">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Submit ─────────────────────────────────────────────── -->
+    <button type="submit" class="btn-signin" id="btn-signin" aria-label="Sign in to LeaveEase">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="btn-label">Sign In</span>
+        <!-- Right-arrow icon -->
+        <svg class="btn-arrow" viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+        </svg>
+    </button>
+
+    <!-- ── Footer ─────────────────────────────────────────────── -->
+    <div class="auth-footer">
+        <span>Don't have an account?&nbsp;</span>
+        <a href="{% url 'register' %}" id="signup-link">Sign Up</a>
+    </div>
+
+</form>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ── Password visibility toggle ──────────────────────────── */
+    const toggle   = document.getElementById('pw-toggle');
+    const pwInput  = document.getElementById('id_password');
+    const eyeOn    = document.getElementById('icon-eye');
+    const eyeOff   = document.getElementById('icon-eye-off');
+
+    if (toggle && pwInput) {
+        toggle.addEventListener('click', function () {
+            const isHidden = pwInput.type === 'password';
+            pwInput.type   = isHidden ? 'text' : 'password';
+            eyeOn.style.display  = isHidden ? 'none'  : '';
+            eyeOff.style.display = isHidden ? ''      : 'none';
+            toggle.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+            toggle.setAttribute('aria-label',   isHidden ? 'Hide password' : 'Show password');
+        });
+    }
+
+    /* ── Loading state on submit ──────────────────────────────── */
+    const form   = document.getElementById('login-form');
+    const btn    = document.getElementById('btn-signin');
+
+    if (form && btn) {
+        form.addEventListener('submit', function () {
+            btn.classList.add('loading');
+        });
+    }
+})();
+</script>
+{% endblock %}

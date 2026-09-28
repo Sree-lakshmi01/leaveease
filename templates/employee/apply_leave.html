@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for Leave - LeaveEase{% endblock %}
+{% block page_title %}Leave Application{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-in">
+    <!-- Left Column: Form -->
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-paper-plane me-2 text-primary"></i>Submit New Request</h5>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_leave_type" class="form-label text-secondary">Leave Type *</label>
+                        {{ form.leave_type }}
+                        {% if form.leave_type.errors %}
+                            <small class="text-danger d-block mt-1">{{ form.leave_type.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3 d-flex align-items-end">
+                        <div class="p-2 rounded w-100" id="balance-info-alert" style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); display: none;">
+                            <span class="text-secondary" style="font-size: 0.85rem;">Available Balance: </span>
+                            <span class="text-white fw-bold" id="selected-balance-count">0</span>
+                            <span class="text-secondary" style="font-size: 0.85rem;"> Days</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_start_date" class="form-label text-secondary">Start Date *</label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                            <small class="text-danger d-block mt-1">{{ form.start_date.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_end_date" class="form-label text-secondary">End Date *</label>
+                        {{ form.end_date }}
+                        {% if form.end_date.errors %}
+                            <small class="text-danger d-block mt-1">{{ form.end_date.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Helper Duration Info -->
+                <div class="mb-3 p-2 rounded" id="duration-info-alert" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); display: none;">
+                    <span class="text-secondary" style="font-size: 0.85rem;">Calculated Duration: </span>
+                    <span class="text-white fw-bold" id="calculated-duration-count">0</span>
+                    <span class="text-secondary" style="font-size: 0.85rem;"> Days</span>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_reason" class="form-label text-secondary">Reason for Leave *</label>
+                    {{ form.reason }}
+                    {% if form.reason.errors %}
+                        <small class="text-danger d-block mt-1">{{ form.reason.errors.0 }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <label for="id_medical_cert" class="form-label text-secondary">Medical Certificate (Optional, required for Sick Leave over 3 days)</label>
+                    {{ form.medical_certificate }}
+                    {% if form.medical_certificate.errors %}
+                        <small class="text-danger d-block mt-1">{{ form.medical_certificate.errors.0 }}</small>
+                    {% endif %}
+                    <small class="text-muted d-block mt-1">Accepted formats: PDF, JPG, PNG. Max size: 5MB.</small>
+                </div>
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger bg-opacity-10 text-danger border-danger border-opacity-25 mb-4">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <button type="submit" class="btn btn-gradient-primary">
+                    <i class="fa-solid fa-paper-plane me-2"></i>Submit Application
+                </button>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary ms-2 glass-input">Cancel</a>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Right Column: Balance Overview Quick Widget -->
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-4"><i class="fa-solid fa-scale-balanced me-2 text-primary"></i>My Balance Summary</h5>
+            <div class="d-flex flex-column gap-3">
+                {% for bal in balances %}
+                <div class="p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);" data-type-id="{{ bal.leave_type.id }}" data-balance="{{ bal.remaining }}">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-white fw-semibold" style="font-size: 0.9rem;">{{ bal.leave_type.name }}</span>
+                        <span class="badge" style="background: {{ bal.leave_type.color_code }}20; color: {{ bal.leave_type.color_code }}; border: 1px solid {{ bal.leave_type.color_code }}30;">
+                            {{ bal.remaining }} / {{ bal.allocated }} Left
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 4px; background: rgba(255,255,255,0.05);">
+                        <div class="progress-bar" style="background-color: {{ bal.leave_type.color_code }}; width: {% widthratio bal.remaining bal.allocated 100 %}%"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center m-0">No leave balances found.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Live Calculation of Duration & Display Balance
+    const startInput = document.getElementById('id_start_date');
+    const endInput = document.getElementById('id_end_date');
+    const durationAlert = document.getElementById('duration-info-alert');
+    const durationCount = document.getElementById('calculated-duration-count');
+    
+    function calculateDuration() {
+        const startVal = startInput.value;
+        const endVal = endInput.value;
+        
+        if (startVal && endVal) {
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+            
+            if (start <= end) {
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                durationCount.textContent = diffDays;
+                durationAlert.style.display = 'block';
+            } else {
+                durationAlert.style.display = 'none';
+            }
+        } else {
+            durationAlert.style.display = 'none';
+        }
+    }
+    
+    startInput.addEventListener('change', calculateDuration);
+    endInput.addEventListener('change', calculateDuration);
+    
+    // Live Balance Indicator on Change Leave Type
+    const typeSelect = document.getElementById('id_leave_type');
+    const balanceAlert = document.getElementById('balance-info-alert');
+    const balanceCount = document.getElementById('selected-balance-count');
+    
+    typeSelect.addEventListener('change', function() {
+        const selectedId = this.value;
+        if (selectedId) {
+            const widget = document.querySelector(`[data-type-id="${selectedId}"]`);
+            if (widget) {
+                const balance = widget.getAttribute('data-balance');
+                balanceCount.textContent = balance;
+                balanceAlert.style.display = 'block';
+            } else {
+                balanceAlert.style.display = 'none';
+            }
+        } else {
+            balanceAlert.style.display = 'none';
+        }
+    });
+    
+    // Trigger on page load
+    typeSelect.dispatchEvent(new Event('change'));
+
+    // Restore pending AI generated reason if user clicked Auto-fill from another page
+    const pendingReason = sessionStorage.getItem('ai_pending_leave_reason');
+    if (pendingReason) {
+        const reasonTextarea = document.getElementById('leave_reason') || document.getElementById('id_reason');
+        if (reasonTextarea) {
+            reasonTextarea.value = pendingReason;
+            reasonTextarea.focus();
+            reasonTextarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            sessionStorage.removeItem('ai_pending_leave_reason');
+        }
+    }
+</script>
+{% endblock %}
